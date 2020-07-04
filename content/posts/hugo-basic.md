@@ -11,7 +11,7 @@ draft: false
 
 `hugo new posts/article-name.md`
 
-## Article mata info
+## Article meta info
 
 ```md
 ---
