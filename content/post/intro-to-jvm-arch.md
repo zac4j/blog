@@ -228,5 +228,6 @@ JVM 规范允许 *native* 方法堆栈具有固定大小，或者根据计算要
 
 JVM Run-Time Data Areas: <https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-2.html#jvms-2.5.4>
 JVM architecture: <https://www.geeksforgeeks.org/jvm-works-jvm-architecture/>
+Class Loader: <https://www.baeldung.com/java-classloaders>
 
 [currm]:https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-2.html#jvms-2.6
