@@ -1,5 +1,5 @@
 ---
-title: "Intro to JVM Architecture"
+title: "JVM Architecture in A Nutshell"
 date: 2020-07-17
 draft: true
 ---
@@ -223,6 +223,22 @@ JVM 规范允许 *native* 方法堆栈具有固定大小，或者根据计算要
 运行时常量池会关联如下异常：
 
 + 创建类或缄口时，如果运行时常量池构造所需的内存超过 JVM 方法区的可用内存，则 JVM 会抛出 **OutOfMemoryError**.
+
+## Execution Engine
+
+执行引擎执行 *.class(bytecode)*.它逐行读取字节码，使用各个存储区的数据和信息并执行指令，它可以分成三部分：
+
++ Interpreter：逐行解释字节码然后执行。缺点是当多处调用一个方法时，每次都需要解释步骤。
++ Just-in-Time Compiler(HotSpot)：用于提高解释器的效率，它编译整个字节码并将其转换为 *native* 代码，每当解释器遇见重复的方法调用时，JIT 都会为该部分提供 *native* 代码，因此不用解释器重复解释，从而提高了效率。
++ Garbage Collector：销毁未引用的对象，回收内存。
+
+## Java Native Interface（JNI）
+
+JNI 是与 *native* 方法库交互的接口，它使 JVM 可以调用 C/C ++ 库。
+
+## Native Method Libraries
+
+供执行引擎需要的 *native* 代码库。
 
 ## Reference
 
