@@ -115,7 +115,7 @@ class CustomClassLoader : ClassLoader() {
 
 ### Responsibility
 
-Class Loader 系统主要有3种功能：
+Class Loader 系统主要有[3种功能][lli]：
 
 + Loading
 + Linking
@@ -133,11 +133,11 @@ Class Loader 系统主要有3种功能：
 
 #### Linking
 
-执行验证（Verification）、准备（Preparation）和解决（Resolution）。
+执行 Verification、Preparation 和 Resolution。
 
-+ 验证：通过检查 *.class* 文件是否正确的格式化和是否由有效的编译器生成，确保该文件的正确性。如果验证失败，将抛出运行时异常：*java.lang.VerifyError*。
-+ 准备：JVM 为类变量分配内存，并将内存初始化为默认值。
-+ 解决（可选）：这是用直接引用替换类型中的符号引用的过程。通过搜索方法区域以找到引用的实体来完成此操作。
++ Verification：通过检查 *.class* 文件是否正确的格式化和是否由有效的编译器生成，确保该文件的正确性。如果验证失败，将抛出运行时异常：*java.lang.VerifyError*。
++ Preparation：JVM 为类变量分配内存，并将内存初始化为默认值。
++ Resolution：这是用直接引用(direct references)替换类型中的符号引用(symbolic references)的过程。通过搜索方法区域以找到引用的实体来完成此操作。
 
 #### Initialization
 
@@ -246,4 +246,5 @@ JVM Run-Time Data Areas: <https://docs.oracle.com/javase/specs/jvms/se8/html/jvm
 JVM architecture: <https://www.geeksforgeeks.org/jvm-works-jvm-architecture/>
 Class Loader: <https://www.baeldung.com/java-classloaders>
 
+[lli]:https://docs.oracle.com/javase/specs/jvms/se6/html/ConstantPool.doc.html#67960
 [currm]:https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-2.html#jvms-2.6
