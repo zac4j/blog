@@ -10,3 +10,7 @@ draft: true
 + 流式请求(streaming request) 请求发出后，还一直监听它的变化并处理返回结果
 
 ### 一次性请求
+
+### 测试协程
+
+[test-coroutines]:https://www.youtube.com/watch?v=KMb0Fs8rCRs
