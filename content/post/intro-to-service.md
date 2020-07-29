@@ -4,7 +4,6 @@ date: 2020-07-04T11:08:11+08:00
 draft: false
 --- 
 
-
 ## 查看进程基本信息
 
 使用 `adb shell ps|grep com.tencent.mobileqq` 可以查看 QQ 应用进程相关的基本信息

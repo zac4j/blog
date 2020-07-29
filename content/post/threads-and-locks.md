@@ -85,5 +85,48 @@ Exception table:
 
 The rules for volatile variables effectively require that main memory be touched exactly once for each use or assign of a volatile variable by a thread, and that main memory be touched in exactly the order dictated by the thread execution semantics. However, such memory operations are not ordered with respect to read and write operations on nonvolatile variables.
 
+## Thread Pool
+
+Most of the executor implementations in *java.util.concurrent* use thread pools, which consist of *worker threads*. This kind of thread exists separately from the *Runnable* and *Callable* tasks it executes and is often used to execute multiple tasks.
+
+*java.util.concurrent* 包中大部分 executor 实现都使用线程池，这些线程池由 *work threads* 组成。这些线程与它执行的 *Runnable* 和 *Callable* 任务分开，通常用于执行多个任务。
+
+Using *worker threads* minimizes the overhead due to thread creation. Thread objects use a significant amount of memory, and in a large-scale application, allocating and deallocating many thread objects creates a significant memory management overhead.
+
+使用 *worker threads* 可以最大限度减少线程创建所带来的开销。线程对象占用大量内存，并且在大规模 App 中，分配和取消分配许多线程会产生大量内存管理的开销。
+
+One common type of thread pool is the *fixed thread pool*. This type of pool always has a specified number of threads running; if a thread is somehow terminated while it is still in use, it is automatically replaced with a new thread. Tasks are submitted to the pool via an *internal queue*, which holds extra tasks whenever there are more active tasks than threads.
+
+线程池的一种常见类型是 *fixed thread pool*。这种类型的线程池始终有指定数量的线程在运行；如果一个线程在使用时被某种方式突然终止，则线程池会自动创建新的线程替换终止的线程。任务通过内部队列提交到线程池中，*该内部队列在活动任务多于线程数时容纳额外的任务。*
+
+An important advantage of the fixed thread pool is that applications using it degrade gracefully. To understand this, consider a web server application where each HTTP request is handled by a separate thread. If the application simply creates a new thread for every new HTTP request, and the system receives more requests than it can handle immediately, the application will suddenly stop responding to all requests when the overhead of all those threads exceed the capacity of the system. With a limit on the number of the threads that can be created, the application will not be servicing HTTP requests as quickly as they come in, but it will be servicing them as quickly as the system can sustain.
+
+固定线程池的一个重要优势是使用该线程池的 App 可以正常降级。考虑一个 Web 服务应用，每个 HTTP 请求均由单独的线程处理。如果该应用仅简单针对每个 HTTP 请求创建新的线程，
+并且系统收到的请求超出了其立即处理的数量，当这些线程的所有开销超出系统的容量时，应用会突然停止响应所有请求。由于可以创建的线程数量受到限制，因此应用可以不尽快的处理 HTTP 请求，但
+可以根据系统能力尽快服务这些请求。
+
+A simple way to create an executor that uses a fixed thread pool is to invoke the [newFixedThreadPool][nft] factory method in *java.util.concurrent.Executors* This class also provides the following factory methods:
+
+调用 *java.util.concurrent.Executors* 中的 newFixedThreadPool 工厂方法可以创建固定线程池的 executor。此类还提供如下工厂方法：
+
++ The [newCachedThreadPool][ncp] method creates an executor with an expandable thread pool. This executor is suitable for applications that launch many short-lived tasks.
+  
+  *newCachedThreadPool* 使用可扩展的线程池创建 executor。此类线程池适用于启动许多短期任务的应用程序。
+
++ The [newSingleThreadExecutor][nst] method creates an executor that executes a single task at a time.
+  
+  *newSingleThreadExecutor* 创建的 executor 每次只执行一个任务。
+
++ Several factory methods are *ScheduledExecutorService* versions of the above executors.
+  
+  上述 executor 的 *ScheduledExecutorService* 版本有几种工厂方法。
+
+If none of the executors provided by the above factory methods meet your needs, constructing instances of *java.util.concurrent.ThreadPoolExecutor* or *java.util.concurrent.ScheduledThreadPoolExecutor* will give you additional options.
+
+除了上面这些创建 executor 的方法，*java.util.concurrent.ThreadPoolExecutor* 和 *java.util.concurrent.ScheduledThreadPoolExecutor* 也会提供额外的方法。
+
 [threads]:https://docs.oracle.com/javase/specs/jvms/se6/html/Threads.doc.html#21294
 [synchronized]:https://docs.oracle.com/javase/specs/jvms/se6/html/Compiling.doc.html#6530
+[nft]:https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executors.html#newFixedThreadPool-int-
+[ncp]:https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executors.html#newCachedThreadPool-int-
+[nst]:https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executors.html#newSingleThreadExecutor-int-
