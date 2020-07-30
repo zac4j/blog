@@ -125,8 +125,60 @@ If none of the executors provided by the above factory methods meet your needs, 
 
 除了上面这些创建 executor 的方法，*java.util.concurrent.ThreadPoolExecutor* 和 *java.util.concurrent.ScheduledThreadPoolExecutor* 也会提供额外的方法。
 
+## Processes and Threads
+
+In concurrent programming, there are two basic units of execution: *processes* and *threads*. In the Java programming language, concurrent programming is mostly concerned with threads. However, processes are also important.
+
+在并发编程中，有两个基本的执行单元：进程和线程。Java 并发编程主要和线程有关，不过进程也很重要。
+
+A computer system normally has many active processes and threads. This is true even in systems that only have a single execution core, and thus only have one thread actually executing at any given moment. Processing time for a single core is shared among processes and threads through an OS feature called *time slicing*.
+
+计算机系统通常有很多活跃的进程和线程。这在只有一个执行核心以至于任何时刻都只有一个线程实际执行的系统也是如此。通过称为 *时间分片* 的 OS 功能，进程和线程可以共享单个内核的处理时间。
+
+It's becoming more and more common for computer systems to have multiple processors or processors with multiple execution cores. This greatly enhances a system's capacity for concurrent execution of processes and threads — but concurrency is possible even on simple systems, without multiple processors or execution cores.
+
+具有多个处理器或多个执行核心的处理器的计算机系统正在变得越来越普遍。这极大增强了并发执行多进程和多线程的能力——即使是在没有多核处理器的简单系统上，并发也是可能的。
+
+### Processes
+
+A process has a self-contained execution environment. A process generally has a complete, private set of basic run-time resources; in particular, each process has its own memory space.
+
+进程具有独立的执行环境。进程通常具有一组完整的、私有的基本运行时资源，每个进程有自己的内存空间。
+
+Processes are often seen as synonymous with programs or applications. However, what the user sees as a single application may in fact be a set of cooperating processes. To facilitate communication between processes, most operating systems support *Inter Process Communication* (IPC) resources, such as pipes and sockets. IPC is used not just for communication between processes on the same system, but processes on different systems.
+
+进程通常被视为程序或应用的代名词。但实际上用户看见的单个应用可能一组协作进程。为了促进进程间的通信，大多数操作系统都支持 *进程间通信*（IPC）资源，比如管道（pipes）和sockets. IPC 不仅可以用在同一系统的进程间通信，还可用于不同系统上的进程。
+
+Most implementations of the Java virtual machine run as a single process. A Java application can create additional processes using a [ProcessBuilder][pb] object. Multiprocess applications are beyond the scope of this lesson.
+
+大多数的 Jvm 实现都是以单个进程运行的。Java 应用可以使用 [ProcessBuilder][pb] 创建新的进程，不过多进程应用不在这里的讨论范围。
+
+### Threads
+
+Threads are sometimes called *lightweight processes*. Both processes and threads provide an execution environment, but creating a new thread requires fewer resources than creating a new process.
+
+线程通常被称为 *轻量级进程*。进程和线程都可以提供执行环境，但创建线程要比创建进程需要更少的资源。
+
+Threads exist within a process — every process has at least one. Threads share the process's resources, including memory and open files. This makes for efficient, but potentially problematic, communication.
+
+线程存在于进程中 —— 每个进程至少有一个。线程分享进程资源，包括内存和打开的文件。这样可以进行高效的、但同时又可能有问题的通信。
+
+Multithreaded execution is an essential feature of the Java platform. Every application has at least one thread — or several, if you count "system" threads that do things like memory management and signal handling. But from the application programmer's point of view, you start with just one thread, called the main thread. This thread has the ability to create additional threads, as we'll demonstrate in the next section.
+
+多线程执行是 Java 平台基础的功能。每个应用至少有一个 —— 如果算上执行内存管理和信号处理的系统线程，则有多个。但从应用程序员的角度来看，我们从一个线程开始，称为*主线程（main thread）*，这个线程有能力创建别的线程。
+
+#### Thread Objects
+
+每个线程都与一个 [Thread][td] 相关。有两种策略使用 *Thread* 对象创建并发应用。
+
++ 直接控制线程的创建和管理，每次应用需要启动异步任务时，只需实例化 *Thread*。
++ 要从应用的其他部分抽象线程管理，将应用的任务传递给 *executor*。
+
 [threads]:https://docs.oracle.com/javase/specs/jvms/se6/html/Threads.doc.html#21294
 [synchronized]:https://docs.oracle.com/javase/specs/jvms/se6/html/Compiling.doc.html#6530
+[CCY]:https://docs.oracle.com/javase/tutorial/essential/concurrency/index.html
 [nft]:https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executors.html#newFixedThreadPool-int-
 [ncp]:https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executors.html#newCachedThreadPool-int-
 [nst]:https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executors.html#newSingleThreadExecutor-int-
+[pb]:https://docs.oracle.com/javase/8/docs/api/java/lang/ProcessBuilder.html
+[td]:https://docs.oracle.com/javase/8/docs/api/java/lang/Thread.html
