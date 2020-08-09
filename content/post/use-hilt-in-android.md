@@ -4,6 +4,8 @@ date: 2020-08-06
 draft: true
 --- 
 
+> If you want to use dagger in  your project, you may have 2 or 3 different sources, different samples, different blog posts. All of them use a different set-up, and all of them use Dagger in a different way, so it's very difficult to understand all the topics and relate them together. So that's why Google create a common guidance, a common ground.
+
 ## Hilt 中一些注解
 
 ### container
@@ -30,3 +32,4 @@ class App:Application() {
 `@HiltAndroidApp` 会触发 Hilt 生成 App 所使用的依赖注入的基类，*application container* 是 app 的父容器，这意味着别的 *containers* 可以访问它提供的依赖。
 
 [cl]:https://developer.android.com/codelabs/android-hilt?return=https%3A%2F%2Fdeveloper.android.com%2Fcourses%2Fpathways%2Fandroid-week6-jetpack%23codelab-https%3A%2F%2Fdeveloper.android.com%2Fcodelabs%2Fandroid-hilt#3
+[bp]:https://github.com/google/dagger/issues/900
