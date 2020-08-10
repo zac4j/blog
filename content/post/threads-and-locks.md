@@ -4,11 +4,9 @@ date: 2020-07-27
 draft: true
 ---
 
-## 8.12 Threads
-
 Threads are created and managed by the classes Thread and ThreadGroup. Creating a Thread object creates a thread, and that is the only way to create a thread. When the thread is created, it is not yet active; it begins to run when its start method is called.
 
-线程由 Thread 和 ThreadGroup 创建和管理。创建一个线程对象会创建一个线程，这是创建线程的唯一方法。创建线程后，它尚未处于活动状态。当调用其 *start* 方法时，它开始运行。
+<!--more-->
 
 ## 8.13 Locks and Synchronization
 

@@ -1,8 +1,15 @@
 ---
 title: "JVM Mechanics"
 date: 2020-07-17
+description: "Java Virtual Machine In Depth"
+tags: ["jvm"]
+categories: ["jvm"]
 draft: true
 ---
+
+Class 文件的结构
+
+<!--more-->
 
 ## Class File
 

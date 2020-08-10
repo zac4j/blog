@@ -1,12 +1,15 @@
 ---
 title: "JVM Architecture in A Nutshell"
 date: 2020-07-17
+description: "Java Virtual Machine Architecture"
+tags: ["jvm", "classloader", "jmm"]
+categories: ["jvm", "classloader", "jmm"]
 draft: true
 ---
 
-## 跨平台的本质
-
 跨平台的本质是因为汇编指令的不同.
+
+<!--more-->
 
 ## ClassLoader
 

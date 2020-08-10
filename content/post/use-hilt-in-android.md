@@ -1,10 +1,15 @@
 ---
 title: "Use Hilt in Android"
 date: 2020-08-06
+description: "Activity Hilt"
+tags: ["hilt", "dagger", "di"]
+categories: ["hilt", "dagger", "di"]
 draft: true
 --- 
 
 > If you want to use dagger in  your project, you may have 2 or 3 different sources, different samples, different blog posts. All of them use a different set-up, and all of them use Dagger in a different way, so it's very difficult to understand all the topics and relate them together. So that's why Google create a common guidance, a common ground.
+
+<!--more-->
 
 ## Hilt 中一些注解
 

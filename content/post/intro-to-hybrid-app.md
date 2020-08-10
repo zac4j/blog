@@ -1,6 +1,9 @@
 ---
 title: "Intro to Hybrid App"
 date: 2020-07-04T15:45:14+08:00
+keywords: ["hybrid"]
+description: "Android Hybrid Development Introduction"
+tags: ["hybrid"]
 draft: false
 ---
 
@@ -206,10 +209,6 @@ App Summary
 
 内存
 ```
-
-### 页面抖动/空白
-
-实现动画效果在低端设备下运行缓慢，页面抖动，不连贯。
 
 [rexxar]:https://lincode.github.io/Hybrid-Rexxar
 [hybrid]:https://mp.weixin.qq.com/s?__biz=MjM5MDE0Mjc4MA==&mid=2650993147&idx=3&sn=685217d04dec453448e2cf53e5e0e75d&chksm=bdbf09a88ac880beab79ac59fa6a558a97bc8fd16b6da03b1e70a722a4f53420597e1e4a9684&scene=27#wechat_redirect

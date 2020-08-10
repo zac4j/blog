@@ -1,14 +1,19 @@
 ---
 title: "Intro to HashMap"
 date: 2020-07-15T15:11:27+08:00
+description: "HashMap introduction"
+tags: ["hashmap", "data structure"]
+categories: ["hashmap", "data structure", "map"]
 draft: true
 ---
 
+Hash table based implementation of the Map interface.  This implementation provides all of the optional map operations, and permits null values and the null key.
+
+<!--more-->
+
 ## HashMap 介绍
 
-先看看Android SDK 中 HashMap 源码的描述：
-
-Hash table based implementation of the Map interface.  This implementation provides all of the optional map operations, and permits null values and the null key.  (The HashMap class is roughly equivalent to Hashtable, except that it is unsynchronized and permits nulls.) This class makes no guarantees as to the order of the map; in particular, it does not guarantee that the order will remain constant over time.
+The HashMap class is roughly equivalent to Hashtable, except that it is unsynchronized and permits nulls. This class makes no guarantees as to the order of the map; in particular, it does not guarantee that the order will remain constant over time.
 
 HashMap 和 HashTable 大致等效，除了 HashMap 是非同步的，以及允许空值。无法保证顺序随着时间的推移保持不变。
 
