@@ -4,7 +4,7 @@ date: 2020-07-17
 description: "Java Virtual Machine Architecture"
 tags: ["jvm", "classloader", "jmm"]
 categories: ["jvm", "classloader", "jmm"]
-draft: true
+draft: false
 ---
 
 跨平台的本质是因为汇编指令的不同.

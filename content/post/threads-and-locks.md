@@ -1,7 +1,10 @@
 ---
 title: "Threads and Locks"
 date: 2020-07-27
-draft: true
+description: "Threads and locks"
+tags: ["thread", "lock"]
+categories: ["thread", "lock"]
+draft: false
 ---
 
 Threads are created and managed by the classes Thread and ThreadGroup. Creating a Thread object creates a thread, and that is the only way to create a thread. When the thread is created, it is not yet active; it begins to run when its start method is called.

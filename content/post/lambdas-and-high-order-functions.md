@@ -2,7 +2,7 @@
 title: "Lambdas and High-order Functions"
 date: 2020-08-09
 keywords: ["lambda", "high-order function"]
-description: "Lambdas and high-order function introduction"
+description: "Lambdas and high-order functions introduction"
 tags: ["lambda", "high-order function"]
 draft: false
 --- 
@@ -62,6 +62,8 @@ println(updateDirty(20. waterFilter))
 fun waterFilter(dirty: Int): Int = dirty / 2
 println(updateDirty(40, ::waterFilter))
 ```
+
+这种单行的函数也称为 *compat functions* 或 *single-expression functions*，可以增加代码可读性。
 
 ### Last parameter call syntax
 

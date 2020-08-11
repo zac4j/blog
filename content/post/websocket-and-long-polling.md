@@ -1,7 +1,10 @@
 ---
 title: "WebSocket 和长轮询"
 date: 2020-07-21
-draft: true
+description: "Websocket"
+tags: ["network", "websocket", "polling"]
+categories: ["network", "websocket"]
+draft: false
 ---
 
 客户端的网络请求大部分都建立在请求/响应模式的 HTTP/HTTPS 协议之下，AJAX 技术使页面看起来更加动态。尽管如此，所有的 HTTP 连接仍由客户端控制，需要用户交互或定时轮询（periodic polling）才能从服务端加载新数据。
