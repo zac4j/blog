@@ -7,7 +7,7 @@ tags: ["interface", "delegation"]
 draft: false
 ---
 
-[接口委托（Interface delegation）][cl] 是一种高级技术，接口的方法由 helper 或 delegate 对象实现，然后给别的类使用。当我们在一系列不相关的类中使用接口时，这项技术会很有用：我们将需要使用的接口的函数添加到单独的 helper 类中，别的类使用 helper 类的实例来实现这个函数。
+[接口委托（Interface delegation）][cl] 是一种"高级"技术，接口的方法由 helper 或 delegate 对象实现，然后给别的类使用。当我们在一系列不相关的类中使用接口时，这项技术会很有用：我们将需要使用的接口的函数添加到单独的 helper 类中，别的类使用 helper 类的实例来实现这个函数。
 
 <!--more-->
 
