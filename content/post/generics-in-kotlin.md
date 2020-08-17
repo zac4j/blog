@@ -131,5 +131,96 @@ inline fun <reified T: WaterSupply> Aquarium<*>.isOfType() = waterSupply is T
 
 [Star-projections][sp] 很像 Java 编程中的 raw types，不过更加安全。
 
+## inline functions
+
+Lambdas 和高阶函数都很有用，但我们应该了解一个事实：Lambda 是对象。Lambda 表达式是 `Function` 接口的实例，`Function` 接口是 `Object` 的子类。
+
+``` kotlin
+/**
+ * 自定义 with 函数，接收 [name] 字符串，执行 name.block() 函数
+ */
+fun customWith(name: String, block: String.() -> Unit) {
+  name.block()
+}
+
+/**
+ * 调用 customWith 函数，并将 fish.name 首字母大写
+ */
+customWith(fish.name) {
+  capitalize()
+}
+```
+
+上面调用 `customWith` 函数实际的实现像这样：
+
+``` kotlin
+customWith(fish.name, object: Function1<String, Unit>) {
+  override fun invoke(name: String) {
+    name.capitalize()
+  }
+}
+```
+
+通常这不是问题，因为创建对象和调用函数不会产生太多的开销。不过假如 `customWith` 函数在非常多的地方都有调用，那么开销就会多起来。
+
+Kotlin 提供 `inline` 作为处理这种情况的一种方式，通过增加编译器的工作来减少运行时的开销。将函数标记为 `inline` 意味着每次调用该函数时，编译器实际上会将源码转换为内联函数。
+
+比如我们在使用 `customWith` 时标记为 `inline`：
+
+``` kotlin
+inline customWith(fish.name) {
+  capitalize()
+}
+```
+
+它转换后像这样：
+
+``` kotlin
+fish.name.capitalize()
+```
+
+需要注意的是，内联大型函数会增加代码大小，因此 `inline` 适用于多次使用的简单的函数，如 `customWith`。
+
+## SAM
+
+*Single Abstract Method(SAM)* 即表示只有一个方法的接口。在 Java 编写 API 时非常常见，比如 `Runnable` 接口，只定义了一个 `run()` 方法，`Callable` 接口，定义了一个 `call()` 方法。
+
+我们定义个 SAM：
+
+``` java
+class JavaRun {
+  public static void runNow(Runnable runnable) {
+    runnable.run();
+  }
+}
+```
+
+在 Kotlin 中调用该函数：
+
+``` kotlin
+val runnable = object: Runnable {
+  override fun run() {
+    println("I'm a Runnable")
+  }
+}
+
+JavaNow.runNow(runnable)
+```
+
+Kotlin 提供的 SAM 机制会提示缩减代码：
+
+``` kotlin
+JavaNow.runNow {
+  println("Lambda as a Runnable")
+}
+```
+
+SAM 的模版像这样：
+
+``` kotlin
+Class.singleAbstractMethod {lambda_of_override}
+```
+
 [erasure]:https://kotlinlang.org/docs/reference/typecasts.html#type-erasure-and-generic-type-checks
 [sp]:https://kotlinlang.org/docs/reference/generics.html#star-projections
+[ie]:https://codelabs.developers.google.com/codelabs/kotlin-bootcamp-sams/#5
