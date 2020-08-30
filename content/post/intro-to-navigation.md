@@ -73,6 +73,18 @@ override fun onSupportNavigateUp(): Boolean {
 }
 ```
 
+## Safe Args Plugin
+
+When we needs to pass parameters from one fragment to another. To prevent bugs in these transactions and make them type-safe, we use a Gradle plugin called [Safe Args][sa]. The plugin generates `NavDirection` class, and we could use these classes to pass parameters.
+
+We used a `Bundle` to pass data from fragment A to fragment B in the past. These lead two kinds of errors:
+
++ Type mis-match error. For example, if Fragment A sends a String but Fragment requests an Integer from `Bundle`, the request returns the default value of integer is 0.
++ Missing key errors. If fragment B requests an argument that isn't set in the bundle, the operation return `null`.
+
+All above errors might make app misbehave or crash in runtime, but we can use *Safe Argu* to catch these errors in compile time, Safe Args is a Gradle plugin that generates code and classes that help to detect errors at compile-time that might not otherwise be surfaced until the app runs.
+
+[links]:https://codelabs.developers.google.com/codelabs/kotlin-android-training-add-navigation/index.html#12
 [ab]:https://developer.android.com/topic/libraries/architecture/navigation/navigation-ui#top_app_bar
 [ni]:https://developer.android.com/topic/libraries/architecture/navigation/navigation-ui
-[links]:https://codelabs.developers.google.com/codelabs/kotlin-android-training-add-navigation/index.html#12
+[sa]:https://developer.android.com/topic/libraries/architecture/navigation/navigation-pass-data#Safe-args
