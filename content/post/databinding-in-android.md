@@ -23,4 +23,44 @@ Data binding 有如下优势：
 + Android 系统在 app 启动时仅遍历 view hierarchy 一次即可获取每个 view 的引用，而不是像 `findView` 在运行时获取 view 引用。
 + 我们可以 [type safety][ts] 访问 views。（Type safety 意味着编译器在编译时会验证类型，如果我们将错误的类型分配给变量，则会引发编译错误。）
   
+## Databing expression
+
+### Formatted string
+
++ String res:
+
+``` xml
+<string name="quote_format">\"%s\"</string>
+<string name="score_format">Current Score: %d</string>
+```
+
++ Layout res:
+
+``` xml
+<TextView
+    android:id="@+id/word_text"
+   ...
+   android:text="@{@string/quote_format(gameViewModel.word)}"
+/>
+```
+
+### Null coalescing operator
+
+The null coalescing operator (??) chooses the left operand if isn't null or the right if the former is null.
+
+``` xml
+<TextView
+    android:text="@{user.displayName ?? user.lastName}"
+/>
+```
+
+This is functionally equivalent to:
+
+``` xml
+<TextView
+    android:text="@{user.displayName != null ? user.displayName : user.lastName}"
+/>
+```
+
+[es]:https://developer.android.com/topic/libraries/data-binding/expressions#string_literals
 [ts]:https://en.wikipedia.org/wiki/Type_safety
