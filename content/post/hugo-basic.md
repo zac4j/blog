@@ -43,4 +43,9 @@ theme = "ananke"
 
 `hugo -D` output will be in `./public/` directory by default (`-d/--destination` flag to change it, or set `publishdir` in the config file)
 
+## Publish article
+
++ build web site: `hugo -D`
++ deploy web site: `./deploy.sh 'comments'`
+
 [deploy]:https://segmentfault.com/a/1190000012975914
