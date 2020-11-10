@@ -4,7 +4,7 @@ date: 2020-08-14T07:27:09+08:00
 keywords: ["generic", "in and out"]
 description: "Generics in Kotlin world"
 tags: ["generic"]
-draft: true
+draft: false
 ---
 
 val 和 var 与 variables 的 VALUES 相关，val 保护变量的值不变。in 和 out 与 variables 的 TYPES 相关，in 和 out 保证在范型的使用中，只有安全的类型才能传入或传出函数。

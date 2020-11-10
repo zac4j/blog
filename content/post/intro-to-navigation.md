@@ -1,7 +1,7 @@
 ---
 title: "Intro to Navigation"
 date: 2020-08-23T11:11:13+08:00
-draft: true
+draft: false
 ---
 
 ## NavHostFragment

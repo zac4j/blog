@@ -4,7 +4,7 @@ date: 2020-09-06T11:11:13+08:00
 tags: ["custom view"]
 description: "Custom view introduction"
 categories: ["Custom View"]
-draft: true
+draft: false
 ---
 
 To create a custom view we can either extend an existing `View` subclass(like EditText), or create our own subclass of View. By extending View directly, we can create an interactive UI element of any size and shape by overriding the `onDraw()` method for the View to draw it.

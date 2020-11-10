@@ -1,7 +1,7 @@
 ---
 title: "How Are Touch Events Delivered"
 date: 2020-07-11T08:37:45+08:00
-draft: true
+draft: false
 ---
 
 根据例子来理解 Android 的事件传递
