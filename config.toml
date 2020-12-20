@@ -3,16 +3,35 @@ title = "Zac's Blog"
 copyright = "Copyright © 2020, Copyright Zac"
 languageCode = "en-US"
 theme = "indigo"
+paginate = 6
+
+[taxonomies]
+  tag      = "tags"
+  category = "categories"
+
+# Main menu
+[menu]
+
+# provide translations in i18n/*.yaml
+[[menu.main]]
+  weight = 1
+  name   = "Tag"
+  url    = "/tags"
+
+[[menu.main]]
+  weight = 2
+  name   = "Category"
+  url    = "/categories"
 
 [params]
   Author = "Zac"
   Description = "Android developer blog"
-  Subtitle = "Learn to coding, learn to thinking"
+  Subtitle = ""
   Avatar = "images/android-os.png"
   Biography = "🐭"
   ShowBio = true
   PermalinkText = "🔗"
-  mainSections = ["post", "tag"]
+  mainSections = ["post"]
   # Web Monetization only works on secure pages served over HTTPS.
   paymentPointer = ""
 
