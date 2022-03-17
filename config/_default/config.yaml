@@ -5,7 +5,6 @@ title: Zac's blog
 # theme: eureka
 # Comment when not installing with Hugo Modules
 theme: eureka
-# If you cannot access the Github mirror, you can also use the Gitee mirror: gitee.com/wangchucheng/hugo-eureka
 
 paginate: 3
 copyright: >
@@ -24,8 +23,17 @@ defaultContentLanguageInSubdir: false
 markup:
   # Do not modify markup.highlight
   highlight:
-    codeFences: false
-    noClasses: false
+    anchorLineNos: false
+    codeFences: true
+    guessSyntax: false
+    hl_Lines: ""
+    lineAnchors: ""
+    lineNoStart: 1
+    lineNos: false
+    lineNumbersInTable: true
+    noClasses: true
+    style: native
+    tabWidth: 4
   tableOfContents:
     startLevel: 2
     endLevel: 6

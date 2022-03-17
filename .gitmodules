@@ -10,3 +10,5 @@
 [submodule "themes/eureka"]
 	path = themes/eureka
 	url = https://github.com/wangchucheng/hugo-eureka.git
+[submodule "public"]
+	url = https://github.com/zac4j/zac4j.github.io.git
