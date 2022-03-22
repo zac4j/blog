@@ -1,9 +1,9 @@
 ---
-title: "Handler in Code"
+title: "Handler in Details"
 date: 2020-04-12T20:36:33+08:00
 tags: ["Handler", "MessageQueue", "Looper"]
-description: "Handler 消息机制的实现"
-categories: ["Handler"]
+description: "Handler 消息机制的实现原理"
+categories: ["Handler", "Android"]
 author: "Zac"
 ---
 
@@ -12,8 +12,8 @@ author: "Zac"
 + 在主线程(UI Thread)中：
 
 ```kotlin
-class MainActivity : Activity {
-    private val mLeakedHandler = object : Handler() {
+class MainActivity: Activity {
+    private val mLeakedHandler = object: Handler(Looper.getMainLooper()) {
         override fun handleMessage(msg: Message) {
             super.handleMessage(msg)
         }
@@ -25,10 +25,10 @@ class MainActivity : Activity {
 + 在子线程中：
 
 ```kotlin
-val thread = object : Thread() {
+val thread = object: Thread() {
     override fun run() {
-        Looper.prepare()
-        val handler = object : Handler() {
+        val looper = Looper.prepare()
+        val handler = object: Handler(Looper.myLooper()) {
             override fun handleMessage(msg: Message) {
                 super.handleMessage(msg)
             }

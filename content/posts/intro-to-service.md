@@ -2,8 +2,8 @@
 title: "Intro to Service"
 date: 2020-07-04T11:08:11+08:00
 description: "Introduction to Android Service"
-tags: ["android", "service"]
-categories: ["programming", "android"]
+tags: ["service"]
+categories: ["android"]
 --- 
 
 <!--more-->

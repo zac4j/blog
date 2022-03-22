@@ -1,8 +1,15 @@
 ---
 title: "Intro to Navigation"
 date: 2020-08-23T11:11:13+08:00
+description: "Introduction to Jetpack's Navigation Component"
+tags: ["navigation", "jetpack"]
+categories: ["android"]
 draft: false
 ---
+
+The Jetpack's Navigation component helps us implement navigation feature in a single MainActivity, it contains 3 core parts: Navigation graph, NavHost, NavController.
+
+<!-- more -->
 
 ## NavHostFragment
 

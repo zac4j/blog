@@ -3,7 +3,7 @@ title: "Generics in Kotlin"
 date: 2020-08-14T07:27:09+08:00
 keywords: ["generic", "in and out"]
 description: "Generics in Kotlin world"
-tags: ["generic"]
+tags: ["generic", "kotlin"]
 draft: false
 ---
 
