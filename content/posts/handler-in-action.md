@@ -1,9 +1,9 @@
 ---
 title: "Handler in Action"
 date: 2020-04-14T21:53:54+08:00
-tags: ["Handler", "MessageQueue", "Looper"]
+tags: ["handler", "message queue", "looper"]
 description: "Handler 消息机制的应用"
-categories: ["Android"]
+categories: ["android"]
 author: "Zac"
 ---
 

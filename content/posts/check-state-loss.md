@@ -2,8 +2,8 @@
 title: "Check State Loss"
 date: 2020-02-11T16:30:26+08:00
 description: "Fragment state loss"
-tags: ["Fragment", "DialogFragment", "State Loss"]
-categories: ["Fragment"]
+tags: ["fragment", "dialog fragment", "state loss"]
+categories: ["android"]
 ---
 
 #### 背景

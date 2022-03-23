@@ -3,7 +3,7 @@ title: "后台任务指南"
 date: 2022-03-17T13:53:58+08:00
 description: "Giude to background work"
 tags: ["background", "task"]
-categories: ["android", "work"]
+categories: ["android"]
 draft: true
 ---
 

@@ -3,7 +3,7 @@ title: "Fragment in ViewPager"
 date: 2020-05-25T20:55:31+08:00
 description: "Fragment 在 ViewPager 中的应用"
 tags: ["fragment", "viewpager"]
-categories: ["fragment"]
+categories: ["android"]
 author: "Zac"
 ---
 

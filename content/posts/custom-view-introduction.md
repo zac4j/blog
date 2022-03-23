@@ -3,7 +3,7 @@ title: "Introduction to Custom View"
 date: 2020-09-06T11:11:13+08:00
 tags: ["custom view"]
 description: "Custom view introduction"
-categories: ["Custom View"]
+categories: ["android"]
 draft: false
 ---
 

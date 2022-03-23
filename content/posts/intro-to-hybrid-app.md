@@ -4,6 +4,7 @@ date: 2020-07-04T15:45:14+08:00
 keywords: ["hybrid"]
 description: "Android Hybrid Development Introduction"
 tags: ["hybrid"]
+categories: ["android"]
 draft: false
 ---
 

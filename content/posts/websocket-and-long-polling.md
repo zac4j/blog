@@ -3,7 +3,7 @@ title: "WebSocket 和长轮询"
 date: 2020-07-21
 description: "Websocket"
 tags: ["network", "websocket", "polling"]
-categories: ["network", "websocket"]
+categories: ["network"]
 draft: false
 ---
 

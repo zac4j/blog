@@ -1,6 +1,9 @@
 ---
 title: "Data Binding in Android"
 date: 2020-08-23T08:37:45+08:00
+description: "DataBinding"
+tags: ["databinding"]
+categories: ["android"]
 draft: false
 ---
 

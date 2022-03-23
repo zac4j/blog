@@ -1,6 +1,9 @@
 ---
 title: "Java Basic"
 date: 2020-07-03T09:28:31+08:00
+description: "Java Fundamental"
+tags: ["java"]
+categories: ["java", "basic"]
 draft: false
 ---
 
@@ -22,6 +25,7 @@ draft: false
   + -gc：监视 Java 堆的状况，包括 Eden 区，两个 survior 区，老年代、永久代等的容量，已用空间、GC 时间合计等统计
 
 ## 1.equals 和 == 的差别？
+
 两者都是判断等价性，区别要从入参类型来看：
 
 + 对于基本类型，他们是比较值是否相等

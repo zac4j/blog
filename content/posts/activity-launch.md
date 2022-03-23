@@ -3,7 +3,7 @@ title: "Activity Start"
 date: 2020-04-22T08:10:27+08:00
 description: "Activity Launch"
 tags: ["activity", "launch"]
-categories: ["activity"]
+categories: ["android"]
 ---
 
 ### Task and Back Stack

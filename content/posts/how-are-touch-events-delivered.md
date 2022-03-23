@@ -1,6 +1,9 @@
 ---
 title: "How Are Touch Events Delivered"
 date: 2020-07-11T08:37:45+08:00
+description: "Touch event delivery"
+tags: ["touch event"]
+categories: ["android"]
 draft: false
 ---
 

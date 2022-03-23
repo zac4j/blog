@@ -3,7 +3,7 @@ title: "Hugo Basic"
 date: 2020-04-04T09:25:04+08:00
 description: "Hugo 的简单用法"
 tags: ["hugo", "pages"]
-categories: ["hugo"]
+categories: ["hugo", "basic"]
 draft: false
 ---
 

@@ -3,7 +3,7 @@ title: "Threads and Locks"
 date: 2020-07-27
 description: "Threads and locks"
 tags: ["thread", "lock"]
-categories: ["thread", "lock"]
+categories: ["java", "thread"]
 draft: false
 ---
 

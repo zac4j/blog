@@ -4,6 +4,7 @@ date: 2020-08-09
 keywords: ["lambda", "high-order function"]
 description: "Lambdas and high-order functions introduction"
 tags: ["lambda", "high-order function"]
+categories: ["kotlin"]
 draft: false
 --- 
 

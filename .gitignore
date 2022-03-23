@@ -3,3 +3,5 @@ hugo
 .DS_Store
 
 public/
+
+themes/

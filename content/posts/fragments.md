@@ -1,9 +1,9 @@
 ---
 title: "Intro to Fragments"
 date: 2020-05-07T20:30:50+08:00
-tags: ["Fragment", "Lifecycle"]
+tags: ["fragment", "lifecycle"]
 description: "Fragment 生命周期和使用"
-categories: ["Fragment"]
+categories: ["android"]
 author: "Zac"
 ---
 

@@ -3,7 +3,7 @@ title: "Intro to Build System"
 date: 2020-06-05T14:49:15+08:00
 description: "Introduction to Android Build System"
 tags: ["build", "gradle"]
-categories: ["gradle"]
+categories: ["android", "gradle"]
 author: "Zac"
 ---
 

@@ -3,7 +3,7 @@ title: "Use Hilt in Android"
 date: 2020-11-06
 description: "Activity Hilt"
 tags: ["hilt", "dagger", "di"]
-categories: ["hilt", "dagger", "di"]
+categories: ["di"]
 draft: false
 --- 
 

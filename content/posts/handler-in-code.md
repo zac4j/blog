@@ -1,9 +1,9 @@
 ---
 title: "Handler in Details"
 date: 2020-04-12T20:36:33+08:00
-tags: ["Handler", "MessageQueue", "Looper"]
+tags: ["handler", "message queue", "looper"]
 description: "Handler 消息机制的实现原理"
-categories: ["Handler", "Android"]
+categories: ["android"]
 author: "Zac"
 ---
 

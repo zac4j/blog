@@ -2,8 +2,8 @@
 title: "Intro to HashMap"
 date: 2020-07-15T15:11:27+08:00
 description: "HashMap introduction"
-tags: ["hashmap", "data structure"]
-categories: ["hashmap", "data structure", "map"]
+tags: ["hashmap", "map"]
+categories: ["data structure"]
 draft: false
 ---
 

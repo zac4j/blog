@@ -6,9 +6,9 @@ title: Zac's blog
 # Comment when not installing with Hugo Modules
 theme: eureka
 
-paginate: 3
-copyright: >
-  &copy; Copyright © 2022, Copyright Zac
+paginate: 5
+copyright: > 
+  Copyright Zac &copy; 2022
 enableEmoji: true
 enableGitInfo: false
 summaryLength: 75

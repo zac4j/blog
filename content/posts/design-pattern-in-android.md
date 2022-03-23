@@ -1,6 +1,9 @@
 ---
 title: "Essential Design Pattern in Android"
 date: 2020-06-20T20:22:10+08:00
+description: "Design pattern in Android"
+tags: ["design pattern"]
+categories: ["android", "design pattern"]
 draft: false
 ---
 

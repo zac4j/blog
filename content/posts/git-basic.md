@@ -1,5 +1,8 @@
 ---
 title: "Git Basic"
+description: "Git fundamental"
+tags: ["git"]
+categories: ["git", "basic"]
 date: 2020-05-15T15:55:52+08:00
 ---
 
