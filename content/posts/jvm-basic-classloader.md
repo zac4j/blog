@@ -1,8 +1,8 @@
 ---
-title: "Intro to ClassLoader"
+title: "JVM Basic - ClassLoader"
 date: 2022-03-23T08:44:28+08:00
-description: "Introduction to ClassLoader"
-tags: ["classloader"]
+description: "Intro to JVM's ClassLoader"
+tags: ["classloader", "jvm"]
 categories: ["java"]
 author: "Zac"
 draft: false
@@ -93,7 +93,7 @@ class CustomClassLoader : ClassLoader() {
 }
 ```
 
-### ClassLoader 是如何工作的
+### 类加载器是如何工作的
 
 类加载器是 JRE 的一部分。当 JVM 需要一个类时，类加载器尝试定位该类，并使用 **完全限定的类名** *(fully qualified class name)* 将 **类定义**(*class definition*) 加载到 Runtime 中。
 
