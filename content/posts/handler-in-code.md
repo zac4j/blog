@@ -1,7 +1,7 @@
 ---
 title: "Handler in Details"
 date: 2020-04-12T20:36:33+08:00
-tags: ["handler", "message queue", "looper"]
+tags: ["handler"]
 description: "Handler 消息机制的实现原理"
 categories: ["android"]
 author: "Zac"
@@ -11,7 +11,7 @@ author: "Zac"
 
 + 在主线程(UI Thread)中：
 
-```kotlin
+``` kotlin
 class MainActivity: Activity {
     private val mLeakedHandler = object: Handler(Looper.getMainLooper()) {
         override fun handleMessage(msg: Message) {
@@ -24,7 +24,7 @@ class MainActivity: Activity {
 
 + 在子线程中：
 
-```kotlin
+``` kotlin
 val thread = object: Thread() {
     override fun run() {
         val looper = Looper.prepare()
@@ -42,7 +42,7 @@ val thread = object: Thread() {
 
 因为 ActivityThread 中的 `main()` 方法已经为我们初始化了 Looper
 
-```java
+``` java
 public static void main(String[] args) {
 
     // Install selective syscall interception
@@ -77,7 +77,7 @@ public static void main(String[] args) {
 
 我们可以通过观察 Handler 的构造方法理解：
 
-```java
+``` java
 public Handler(@Nullable Callback callback, boolean async) {
     ...
 
@@ -94,7 +94,8 @@ public Handler(@Nullable Callback callback, boolean async) {
 
 `Looper.myLooper()` 的实现则是：
 
-```java
+``` java
+// android/os/Looper.java
 public static @Nullable Looper myLooper() {
     return sThreadLocal.get();
 }
@@ -102,7 +103,8 @@ public static @Nullable Looper myLooper() {
 
 那么 sThreadLocal 在哪里 set 的呢？答案是 `Looper.prepare()` 方法:
 
-```java
+``` java
+// android/os/Looper.java
 private static void prepare(boolean quitAllowed) {
     if (sThreadLocal.get() != null) {
         throw new RuntimeException("Only one Looper may be created per thread");
@@ -124,9 +126,10 @@ private static void prepare(boolean quitAllowed) {
   
 ### Handler 和 MessageQueue
 
-观察源码可以发现 handler 的 `sendMessage(msg)`、`sendMessageDelayed(msg, timeMillis)`、`post(runnable)` 方法最后都是通过调用 `sendMessageAtTime(msg, uptimeMillis)` 实现：
+观察 Handler 的实现可以发现 `sendMessage(msg)`、`sendMessageDelayed(msg, timeMillis)`、`post(runnable)` 方法最后都是通过调用 `sendMessageAtTime(msg, uptimeMillis)` 实现：
 
-```java
+``` java
+// android/os/Handler.java
 public boolean sendMessageAtTime(@NonNull Message msg, long uptimeMillis) {
     MessageQueue queue = mQueue;
     if (queue == null) {
@@ -141,7 +144,7 @@ public boolean sendMessageAtTime(@NonNull Message msg, long uptimeMillis) {
 
 这里 `Handler.mQueue` 是在 Handler 构造方法里通过 `mLooper.mQueue` 获取，而 `Looper.mQueue` 是在 Looper 初始化时创建:
 
-```java
+``` java
 // android/os/Handler.java
 public Handler(@Nullable Callback callback, boolean async) {
     ...
@@ -162,13 +165,14 @@ private Looper(boolean quitAllowed) {
 }
 ```
 
-可以看到像官方文档描述的那样，每个 Handler 实例都关联着一条线程以及这条线程的消息队列(Each Handler instance is associated with a single thread and that thread's message queue)。
+可以看到像官方文档描述的那样，每个 Handler 实例都关联着一条线程以及这条线程的消息队列(*Each Handler instance is associated with a single thread and that thread's message queue*)。
 
 #### 消息如何入列
 
 在 `sendMessageAtTime()` 方法最后返回了 `Handler.enqueueMessage()` 的值：
 
-```java
+``` java
+// android/os/Handler.java
 private boolean enqueueMessage(@NonNull MessageQueue queue, @NonNull Message msg, long uptimeMillis) {
     msg.target = this;
     msg.workSourceUid = ThreadLocalWorkSource.getUid();
@@ -182,16 +186,18 @@ private boolean enqueueMessage(@NonNull MessageQueue queue, @NonNull Message msg
 
 `Handler.enqueueMessage()` 调用的 `MessageQueue.enqueueMessage()` 实现如下：
 
-```java
+``` java
+// android/os/MessageQueue.java
 boolean enqueueMessage(Message msg, long when) {
     if (msg.target == null) {
         throw new IllegalArgumentException("Message must have a target.");
     }
-    if (msg.isInUse()) {
-        throw new IllegalStateException(msg + " This message is already in use.");
-    }
 
     synchronized (this) {
+        if (msg.isInUse()) {
+            throw new IllegalStateException(msg + " This message is already in use.");
+        }
+
         if (mQuitting) {
             IllegalStateException e = new IllegalStateException(
                     msg.target + " sending message to a Handler on a dead thread");
@@ -238,11 +244,11 @@ boolean enqueueMessage(Message msg, long when) {
 }
 ```
 
-我们分开来看，这里 `msg.target` 即消息对应的 handler, 在 `Handler.enqueueMessage()` 方法有赋值。
+我们分开来看，这里 `msg.target` 即 Message 对应的 Handler 实例, 在 `Handler.enqueueMessage()` 里有赋值。
 
 MessageQueue 并没有队列的数据结构，而是以单链表的形式存储 msg，`mMessages` 为当前链表头部的消息，我们称为 head_msg，当前传入的消息称为 current_msg，
 
-```java
+``` java
 if (p == null || when == 0 || when < p.when) {
     // New head, wake up the event queue if blocked.
     msg.next = p;
@@ -253,13 +259,13 @@ if (p == null || when == 0 || when < p.when) {
 
 `if` 的判断是，如果:
 
-+ 1).当前队列没有 head_msg
-+ 2).current_msg 是需要立即执行
-+ 3).current_msg 的执行时间在 head_msg 执行时间之前
++ 当前队列没有 head_msg
++ current_msg 是需要立即执行
++ current_msg 的执行时间在 head_msg 执行时间之前
 
 则将 head_msg 标记为 current_msg 的下一条消息，current_msg 标记为头部消息，并且唤醒当前阻塞的队列。
 
-```java
+``` java
 ...
 } else {
     // Inserted within the middle of the queue.  Usually we don't have to wake
@@ -288,7 +294,7 @@ if (p == null || when == 0 || when < p.when) {
 
 答案就是在子线程使用 handler 时显式调用的 `Looper.loop()`:
 
-```java
+``` java
 // android/os/Looper.java
 public static void loop() {
     final Looper me = myLooper();
@@ -321,7 +327,7 @@ public static void loop() {
 
 `Looper.loop()` 的实现就是在无限循环中不断从消息队列中取出 msg，并在 `msg.target`即 handler 中 `dispatchMessage`:
 
-```java
+``` java
 public void dispatchMessage(@NonNull Message msg) {
     if (msg.callback != null) {
         handleCallback(msg);
@@ -336,10 +342,10 @@ public void dispatchMessage(@NonNull Message msg) {
 }
 ```
 
-`msg.callback` 对应的是 `Handler.post(runnable)` 传递的 Runnable 对象，而 `mCallback.handleMessage(msg)` 或 `handleMessage(msg)` 则是实例话 Handler 对象时复写的方法。
+`msg.callback` 对应的是 `Handler.post(runnable)` 传递的 Runnable 对象，而 `mCallback.handleMessage(msg)` 或 `handleMessage(msg)` 则是实例化 Handler 对象时复写的方法。
 
 ### 总结
 
-Handler 帮助我们处理 Message 和 Runnable 对象，每个 Handler 实例都关联着一个线程以及这个线程的 MessageQueue。当你创建一个新的 Handler 对象时，它将与当前所在的线程(UI/Work Thread)和 MessageQueue 绑定在一起，通过 Handler 发出的 Message 或者 Runnable(msg.callback) 会根据执行时间插入 MessageQueue，Looper 会持续不断的从 MessageQueue 取出可执行的 Message 通过 Handler.handleMessage(msg) 处理。
+Handler 帮助我们处理 Message 和 Runnable 对象，每个 Handler 实例都关联着一个线程以及这个线程的 MessageQueue。当我们创建一个新的 Handler 对象时，它将与当前所在的线程(UI/Work Thread)和 MessageQueue 绑定在一起，通过 Handler 发出的 Message 或者 Runnable(msg.callback) 会根据执行时间插入 MessageQueue，Looper 会持续不断的从 MessageQueue 取出可执行的 Message 通过 Handler.handleMessage(msg) 处理。
 
-如下图所示：![handler](https://i1.wp.com/tutorial.eyehunts.com/wp-content/uploads/2018/08/Android-Handler-Background-Thread-Communicate-with-UI-thread-1.png?resize=1024%2C621&ssl=1)
+如下图所示：![handler](/img/handler_looper_messagequeue.jpeg)
