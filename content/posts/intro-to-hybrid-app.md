@@ -214,3 +214,4 @@ App Summary
 [rexxar]:https://lincode.github.io/Hybrid-Rexxar
 [hybrid]:https://mp.weixin.qq.com/s?__biz=MjM5MDE0Mjc4MA==&mid=2650993147&idx=3&sn=685217d04dec453448e2cf53e5e0e75d&chksm=bdbf09a88ac880beab79ac59fa6a558a97bc8fd16b6da03b1e70a722a4f53420597e1e4a9684&scene=27#wechat_redirect
 [hybrid]:https://github.com/xd-tayde/blog/blob/master/hybrid-1.md
+[mpaas]:https://zhuanlan.zhihu.com/p/102645754

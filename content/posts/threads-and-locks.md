@@ -1,9 +1,9 @@
 ---
-title: "Threads and Locks"
+title: "Process, Threads and Locks"
 date: 2020-07-27
-description: "Threads and locks"
-tags: ["thread", "lock"]
-categories: ["java", "thread"]
+description: "Process, Threads and locks"
+tags: ["thread", "process", "lock"]
+categories: ["java"]
 draft: false
 ---
 
@@ -84,9 +84,30 @@ Exception table:
 
 ## Volatile
 
+Entry Level:
+
 The rules for volatile variables effectively require that main memory be touched exactly once for each use or assign of a volatile variable by a thread, and that main memory be touched in exactly the order dictated by the thread execution semantics. However, such memory operations are not ordered with respect to read and write operations on nonvolatile variables.
 
+High Level:
+
++ volatile 有2个作用：
+  + 可以保证在多线程环境下共享变量的可见性
+  + 通过增加内存屏障防止多个指令之间的重排序
++ 原理：
+  + 可见性原理
+  + 我理解的可见性是指当一个线程对于共享变量的修改，其他线程可以立即看到修改后的一个值，其实可见性本质上是由几个方面来造成的：
+    + 1.CPU 层面的高速缓存，CPU 设计三级缓存来解决 CPU 运算效率和内存 IO 效率不同步的问题，但是它也带来的就是缓存一致性的问题，而在多线程并行执行的情况下，缓存一致性问题就会导致可见性问题，所以对于增加了 volatile 关键字修饰的共享变量，JVM 虚拟机会自动增加 #Lock 汇编指令，那么这个指令会根据不同的 CPU 型号，去自动添加 CPU 总线锁，或者缓存锁
+      + 总线锁：锁定 CPU 的前端总线，从而保证在同一时刻，只能有一个线程和内存通信，这样就避免了多线程并发造成的可见性问题
+      + 缓存锁：缓存锁是对总线锁的优化，因为总线锁导致 CPU 的使用效率大幅度下降，所以缓存锁只针对 CPU 的三级缓存中的目标数据去加锁，而缓存锁是使用 MESI 缓存一致性协议来实现的
+  + 指令的编写顺序和执行顺序是不一致的，从而在多线程环境下导致可见性问题，指令重排序本质是一种性能优化的手段，它来自于几个方面：
+    + CPU 层面，针对于 MESI 协议的更进一步的优化，去提升 CPU 的利用率，它引入了一种叫 StoreBuffer 机制，而这种优化机制会导致 CPU 的乱序执行，那么为了避免这种问题，CPU 提供了内存屏障指令，上层应用可以在合适的地方去插入内存屏障，去避免 CPU 指令重排序的问题
+    + 编译器层面的优化，编译器在编译过程中，在不改变单线程语义和程序正确性的前提下，对指令进行合理的重排序，从而去优化整体的特性
+  + 所以对于共享变量增加了 volatile 关键字，那么编译器层面就不会去触发编译器优化，同时在 JVM 层面，它会插入内存屏障指令，来避免指令重排序的问题
+  + 当然除了使用 volatile 关键字以外，从 JDK 5 开始，JMM 就使用了一种 Happens-Before 的模型去描述多线程之间的可见性的一个关系，也就是说如果两个操作之间具备 Happens-Before 的关系，那么意味着这两个操作具备可见性的一个关系，不需要在额外去考虑增加 volatile 关键字来提供可见性的保障
+
 ## Thread Pool
+
+Entry level:
 
 Most of the executor implementations in *java.util.concurrent* use thread pools, which consist of *worker threads*. This kind of thread exists separately from the *Runnable* and *Callable* tasks it executes and is often used to execute multiple tasks.
 
@@ -125,6 +146,27 @@ A simple way to create an executor that uses a fixed thread pool is to invoke th
 If none of the executors provided by the above factory methods meet your needs, constructing instances of *java.util.concurrent.ThreadPoolExecutor* or *java.util.concurrent.ScheduledThreadPoolExecutor* will give you additional options.
 
 除了上面这些创建 executor 的方法，*java.util.concurrent.ThreadPoolExecutor* 和 *java.util.concurrent.ScheduledThreadPoolExecutor* 也会提供额外的方法。
+
+High level:
+
+### 如何获取线程池中线程执行完成的状态
+
++ 从线程池的内部获取
+  + 当我们把任务交给线程池处理的时候，线程池会调度工作线程来执行这个任务的 run 方法，当 run 方法正常结束以后，也意味着这个任务完成了，所以线程池中的工作线程是通过同步调用任务的 run 方法，并且等待任务的 run 方法返回后，再去统计任务的完成数量
++ 从线程池外部获取
+  + 线程池提供了一个 `isTerminated()` 方法，可以判断线程池的运行状态，一旦 `isTerminated()` 方法返回的状态是 `TERMINATED` 意味着线程池中的所有任务都已经执行完成了，但是这个方法使用的前提，是程序中需要主动调用线程池的 `shutdown()` 方法，在实际业务中，一般不会去主动关闭线程池，因此这个方法在实用性和灵活性都不是很好
+  + 线程池中有一个 `submit()` 方法，它有一个 Future 的返回值，我们可以通过 `Future.get()` 方法，去获得任务的执行结果，当线程池中的任务没有执行完成之前，`Future.get()` 方法会一直阻塞，直到任务执行结束，因此，只要 `Future.get()` 方法正常返回，就意味着传入线程池中的任务已经执行完成。
+  + 引入 CountDownLatch 计数器，它可以通过初始化指定的一个计数器，去进行倒计时，它提供了2个方法，await() 阻塞线程 和 countDown() 倒计时，我们可以通过组合使用来获取线程执行状态
++ 总结：想要知道线程是否执行结束，我们必须要获取线程执行结束后的状态，由于线程执行是没有返回值的，所以只能通过阻塞-唤醒的方式来实现，`Future.get()` 和 `CountDownLatch` 都是这样的原理
+
+### 线程池拒绝策略怎么自定义
+
+| 任务拒绝策略        | Description                                          |
+|---------------------|------------------------------------------------------|
+| DiscardPolicy       | 直接丢弃任务                                         |
+| CallerRunsPolicy    | 使用调用者线程直接执行被拒绝的任务                   |
+| AbortPolicy         | 默认的拒绝策略，抛出 RejectedExecutionException 异常 |
+| DiscardOldestPolicy | 丢弃处于任务队列头部的任务，添加被拒绝的任务         |
 
 ## Processes and Threads
 
@@ -174,6 +216,27 @@ Multithreaded execution is an essential feature of the Java platform. Every appl
 
 + 直接控制线程的创建和管理，每次应用需要启动异步任务时，只需实例化 *Thread*。
 + 要从应用的其他部分抽象线程管理，将应用的任务传递给 *executor*。
+
+### DeadLock
+
+High level：
+
+死锁是指有两个或两个以上的线程在执行过程中去争夺同样一个共享资源造成的相互等待的一个现象。如果没有外部的干预，线程会一直阻塞，无法往下去执行，这样一直处于相互等待资源的线程，我们称为死锁线程。
+导致死锁的条件有4个，这4个条件同时满足就会产生死锁：
+
++ 互斥条件：共享资源 A 和 B 只能被一个线程占用
++ 请求和保持条件：线程 t1 已经取得共享资源 X，在等待共享资源 Y 的时候，不释放共享资源 X
++ 不可抢占条件：其他线程不能强行抢占线程 t1 占有的资源
++ 循环等待条件：线程 t1 等待线程 t2 占有的资源，线程 t2 等待线程 t1 占有的资源就是循环等待
+
+这些条件导致死锁之后，只能通过人工干预来解决，比如说重启服务或 kill 掉这个线程，而按照死锁发生的 4 个条件，我们只需要破坏其中任意一种就能解决死锁问题，不过互斥条件是没办法破坏的，因为它的互斥锁的基本约束，而其他的三个条件都有办法来破坏：
+
++ 破坏请求和保持条件：
+  + 我们可以一次性申请所有的资源，这样就不存在锁要等待了
++ 破坏不可抢占条件：
+  + 占用部分资源的线程在进一步申请其他资源的时候，如果申请不到，我们可以主动去释放它占有的资源
++ 破坏循环等待条件：
+  + 可以按序申请资源来预防，按序申请是指资源是有线性顺序的，申请的时候，可以先申请资源序号小的，然后再去申请资源序号大的，这样线性化之后，自然就不存在循环了
 
 [threads]:https://docs.oracle.com/javase/specs/jvms/se6/html/Threads.doc.html#21294
 [synchronized]:https://docs.oracle.com/javase/specs/jvms/se6/html/Compiling.doc.html#6530

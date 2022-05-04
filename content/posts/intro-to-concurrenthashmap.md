@@ -1,8 +1,8 @@
 ---
-title: "Intro to HashMap"
+title: "Intro to ConcurrentHashMap"
 date: 2020-07-15T15:11:27+08:00
 description: "HashMap introduction"
-tags: ["hashmap", "map"]
+tags: ["hashmap", "concurrenthashmap", "map"]
 categories: ["data structure"]
 draft: false
 ---
@@ -11,7 +11,7 @@ Hash table based implementation of the Map interface.  This implementation provi
 
 <!--more-->
 
-## HashMap Brief Intro
+## HashMap 介绍
 
 The HashMap class is roughly equivalent to Hashtable, except that it is unsynchronized and permits nulls. This class makes no guarantees as to the order of the map; in particular, it does not guarantee that the order will remain constant over time.
 
@@ -41,7 +41,7 @@ Iteration over collection views requires time proportional to the "capacity" of 
 
 Thus, it's very important not to set the initial capacity too high (or the load factor too low) if iteration performance is important.
 
-因此，如果迭代性能很重要，那么不要将初始容量设置过高（或负载因子设置过低），这很关键。
+因此，如果迭代性能很重要，那么不要将初识容量设置过高（或负载因子设置过低），这很关键。
 
 An instance of HashMap has two parameters that affect its performance：
 
@@ -76,7 +76,7 @@ If many mappings are to be stored in a HashMap instance, creating it with a suff
 
 Note that using many keys with the same {@code hashCode()} is a sure way to slow down performance of any hash table. To ameliorate impact, when keys are {@link Comparable}, this class may use comparison order among keys to help break ties.
 
-注意，使用许多具有相同 hashCode 的键是降低任何哈希表性能的方法。为了改善影响，当键是 *Comparable* 时，此类可以使用键之间的比较顺序来帮助打破平衡。
+注意，使用许多具有相同 hashCode 的键是降低任何哈希表性能的方法。为了改善影响，当键是可比较时(Comparable)时，此类可以使用键之间的比较顺序来帮助打破平衡。
 
 Note that this implementation is not synchronized. If multiple threads access a hash map concurrently, and at least one of the threads modifies the map structurally, it must be synchronized externally. (A structural modification is any operation that adds or deletes one or more mappings; merely changing the value associated with a key that an instance already contains is not a structural modification.) This is typically accomplished by synchronizing on some object that naturally encapsulates the map.
 
@@ -97,76 +97,6 @@ Note that the fail-fast behavior of an iterator cannot be guaranteed as it is, g
 注意不能保证迭代器的 fast fail 行为，一般来说，在存在不同步的并发修改情况下，不可能作出任何严格的保证。因此，编写依赖于此异常的程序的正确性是错误的：迭代器的 fast fail 行为仅用于错误检测。
 
 This class is a member of the [Java Collections Framework][jcf]
-
-## HashMap code implementation
-
-主要围绕几个问题来进行
-
-HashMap 的底层实现
-HashMap 在 JDK1.7 和 JDK1.8 的底层实现是不一样的，在 JDK1.7 中，HashMap 使用的是数组 + 链表实现的，JDK1.8 中使用的是数组+链表或红黑树实现。
-
-JDK 7 中的实现如图：
-![jdk7](/img/HashMapStructure.webp)
-
-每个 Node 包含的内容为:
-
-``` java
-static class Node<K,V> implements Map.Entry<K,V> {
-    // hashcode of key
-    final int hash;
-    final K key;
-    V value;
-    // next node
-    Node<K,V> next;
-}
-```
-
-### HashMap 插入流程
-
-```java
-final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
-                   boolean evict) {
-    Node<K,V>[] tab; Node<K,V> p; int n, i;
-    if ((tab = table) == null || (n = tab.length) == 0)
-        n = (tab = resize()).length;
-    if ((p = tab[i = (n - 1) & hash]) == null)
-        tab[i] = newNode(hash, key, value, null);
-    else {
-        Node<K,V> e; K k;
-        if (p.hash == hash &&
-            ((k = p.key) == key || (key != null && key.equals(k))))
-            e = p;
-        else if (p instanceof TreeNode)
-            e = ((TreeNode<K,V>)p).putTreeVal(this, tab, hash, key, value);
-        else {
-            for (int binCount = 0; ; ++binCount) {
-                if ((e = p.next) == null) {
-                    p.next = newNode(hash, key, value, null);
-                    if (binCount >= TREEIFY_THRESHOLD - 1) // -1 for 1st
-                        treeifyBin(tab, hash);
-                    break;
-                }
-                if (e.hash == hash &&
-                    ((k = e.key) == key || (key != null && key.equals(k))))
-                    break;
-                p = e;
-            }
-        }
-        if (e != null) { // existing mapping for key
-            V oldValue = e.value;
-            if (!onlyIfAbsent || oldValue == null)
-                e.value = value;
-            afterNodeAccess(e);
-            return oldValue;
-        }
-    }
-    ++modCount;
-    if (++size > threshold)
-        resize();
-    afterNodeInsertion(evict);
-    return null;
-}
-```
 
 [ff]:https://whatis.techtarget.com/definition/fail-fast
 [jcf]:https://docs.oracle.com/javase/8/docs/technotes/guides/collections/index.html

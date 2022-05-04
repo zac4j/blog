@@ -1,7 +1,7 @@
 ---
-title: "JVM Mechanics"
+title: "JVM Basic - Compiler"
 date: 2020-07-17
-description: "Java Virtual Machine In Depth"
+description: "Intro to JVM compiler"
 tags: ["jvm"]
 categories: ["jvm"]
 draft: false

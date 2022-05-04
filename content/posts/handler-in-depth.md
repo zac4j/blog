@@ -1,8 +1,8 @@
 ---
-title: "Handler in Action"
+title: "Handler in Depth"
 date: 2020-04-14T21:53:54+08:00
 tags: ["handler"]
-description: "Handler 的实际应用"
+description: "Handler 的应用和原理"
 categories: ["android"]
 author: "Zac"
 ---
@@ -258,7 +258,7 @@ private boolean enqueueMessage(@NonNull MessageQueue queue, @NonNull Message msg
 }
 ```
 
-那么为何 asyncchronos 的 Message 可以立即执行呢，我们可以在 `MessageQueue.enqueueMessage()` 的实现中看到:
+那么为何 asynchronous 的 Message 可以立即执行呢，我们可以在 `MessageQueue.enqueueMessage()` 的实现中看到:
 
 ``` java
 // android/os/MessageQueue.java
@@ -295,9 +295,167 @@ boolean enqueueMessage(Message msg, long when) {
 }
 ```
 
-当有同步屏障时，且入列的 msg 是 async 的会唤起休眠的队列，这就是为何 async Handler 可以无视同步屏障的原因。
+如果队列是 block 的情况，异步消息入列时会唤起队列，此外，在 MessageQueue.next() 中，我们可以看到:
 
-既然同步屏障是系统隐藏的 API，那么什么地方用到了呢，我们可以在
+``` java
+Message next() {
+    // Return here if the message loop has already quit and been disposed.
+    // This can happen if the application tries to restart a looper after quit
+    // which is not supported.
+    final long ptr = mPtr;
+    if (ptr == 0) {
+        return null;
+    }
+
+    int pendingIdleHandlerCount = -1; // -1 only during first iteration
+    int nextPollTimeoutMillis = 0;
+    for (;;) {
+        if (nextPollTimeoutMillis != 0) {
+            Binder.flushPendingCommands();
+        }
+
+        // 1.nextPollTimeoutMillis 不为 0 则阻塞
+        nativePollOnce(ptr, nextPollTimeoutMillis);
+
+        synchronized (this) {
+            // Try to retrieve the next message.  Return if found.
+            final long now = SystemClock.uptimeMillis();
+            Message prevMsg = null;
+            Message msg = mMessages;
+            // 2.判断是否为同步屏障消息
+            if (msg != null && msg.target == null) {
+                // 3.是同步屏障消息，遍历队列跳过同步消息，找出异步消息
+                // Stalled by a barrier.  Find the next asynchronous message in the queue.
+                do {
+                    prevMsg = msg;
+                    msg = msg.next;
+                } while (msg != null && !msg.isAsynchronous());
+            }
+            // 4.正常消息处理，判断是否有延时
+            if (msg != null) {
+                if (now < msg.when) {
+                    // Next message is not ready.  Set a timeout to wake up when it is ready.
+                    nextPollTimeoutMillis = (int) Math.min(msg.when - now, Integer.MAX_VALUE);
+                } else {
+                    // Got a message.
+                    mBlocked = false;
+                    if (prevMsg != null) {
+                        prevMsg.next = msg.next;
+                    } else {
+                        mMessages = msg.next;
+                    }
+                    msg.next = null;
+                    if (DEBUG) Log.v(TAG, "Returning message: " + msg);
+                    msg.markInUse();
+                    return msg;
+                }
+            } else {
+                // 没有消息，那么循环走到 1 那里会一直阻塞
+                // No more messages.
+                nextPollTimeoutMillis = -1;
+            }
+
+            // 我们可以 call looper.quit() 来结束
+            // Process the quit message now that all pending messages have been handled.
+            if (mQuitting) {
+                dispose();
+                return null;
+            }
+
+            ...
+        }
+
+        // While calling an idle handler, a new message could have been delivered
+        // so go back and look again for a pending message without waiting.
+        nextPollTimeoutMillis = 0;
+    }
+}
+```
+
++ 这里首先判断了 MessageQueue 的头部是不是同步屏障
+  + 如果头部 msg 是同步屏障，那么会遍历链表，跳过同步消息，获取队列里面的异步消息，
+    + 如果遍历后没有异步消息，那么此时 msg 为空，会走到注释 5，`nextPollTimeoutMillis` 设置为 -1，然后循环到执行 `nativePollOnce(ptr, nextPollTimeoutMillis)` 开始阻塞队列
+  + 如果头部 msg 不是同步屏障，那么会判断 msg 是否为空，不为空的话会正常处理消息，为空则同样走到注释 5
++ 如果有异步消息，那么会和处理同步消息一样，先判断是否有延时，有延时则 `nextPollTimeoutMillis` 会被赋值，没延时则会返回 msg。
+
+返回的 msg 会交给 `msg.target` 即 handler 处理。
+
+### 同步屏障在系统中的应用
+
+系统一些优先级高的操作会使用到同步屏障，如 View 在绘制时会调用 `ViewRootImpl.scheduleTraversals()` 方法，往 MessageQueue 中插入同步屏障，绘制完成后移除同步屏障。
+
+``` java
+// android/view/ViewRootImpl.java
+void scheduleTraversals() {
+    if (!mTraversalScheduled) {
+        mTraversalScheduled = true;
+        // 插入同步屏障
+        mTraversalBarrier = mHandler.getLooper().getQueue().postSyncBarrier();
+
+        // mTraversalRunnable 中 run 了 doTraversal() 方法
+        mChoreographer.postCallback(
+                Choreographer.CALLBACK_TRAVERSAL, mTraversalRunnable, null);
+        notifyRendererOfFramePending();
+        pokeDrawLockIfNeeded();
+    }
+}
+
+void unscheduleTraversals() {
+    if (mTraversalScheduled) {
+        mTraversalScheduled = false;
+        // 移除同步屏障
+        mHandler.getLooper().getQueue().removeSyncBarrier(mTraversalBarrier);
+        mChoreographer.removeCallbacks(
+                Choreographer.CALLBACK_TRAVERSAL, mTraversalRunnable, null);
+    }
+}
+
+void doTraversal() {
+    if (mTraversalScheduled) {
+        mTraversalScheduled = false;
+        // 移除同步屏障
+        mHandler.getLooper().getQueue().removeSyncBarrier(mTraversalBarrier);
+
+        ...
+
+        performTraversals();
+
+        ...
+    }
+}
+```
+
+为了保证 View 的绘制过程不被主线程其他任务影响，View 在绘制前会往 MessageQueue 插入同步屏障，然后再注册 VSYNC 信号监听，`Choreographer$FrameDisplayEventReceiver` 用来接收 VSYNC 信号：
+
+``` java
+// android/view/Choreographer.java
+
+private final class FrameDisplayEventReceiver extends DisplayEventReceiver implements Runnable {
+    ...
+    @Override
+    public void onVsync(long timestampNanos, long physicalDisplayId, int frame, VsyncEventData vsyncEventData) {
+        ...
+        mTimestampNanos = timestampNanos;
+        mFrame = frame;
+        mLastVsyncEventData = vsyncEventData;
+        Message msg = Message.obtain(mHandler, this);
+        // 发送异步消息
+        msg.setAsynchronous(true);
+        mHandler.sendMessageAtTime(msg, timestampNanos / TimeUtils.NANOS_PER_MS);
+    }
+
+    @Override
+    public void run() {
+        mHavePendingVsync = false;
+        // 借助同步屏障 + 异步消息，doFrame 会优先执行
+        doFrame(mTimestampNanos, mFrame, mLastVsyncEventData);
+    }
+}
+```
+
+`doFrame()` 是 View 真正开始绘制的地方，会调用 ViewRootImpl 的 `doTraversal()`, 从而调用 `performTraversals()`，`performTraversals()` 会调用我们熟悉的 `onMeasure()`、`onLayout()`、`onDraw()`。
+
+这里还可以延伸 VSYNC 信号原理，以及为什么要等 VSYNC 信号回调才开始 View 的绘制流程、掉帧的原理、屏幕的双缓冲、三缓冲等。
 
 [lint]:https://tools.android.com/tips/lint-checks
 [hic]:http://localhost:1313/posts/handler-in-action/
