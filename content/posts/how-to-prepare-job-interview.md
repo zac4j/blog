@@ -3,13 +3,13 @@ title: "How to Prepare Job Interview"
 date: 2022-05-04T20:44:38+08:00
 tags: ["job", "interview"]
 categories: ["career"]
-description: How to prepare a job interview
+description: Let's prepare job interview
 author: Windson Yang
 draft: false
 ---
 
 > 作者：Windson Yang
-> 链接：https://zhuanlan.zhihu.com/p/38432342 
+> 链接：https://zhuanlan.zhihu.com/p/38432342
 > 来源：知乎
 > 著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
 
