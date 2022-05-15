@@ -2,11 +2,19 @@
 title: "JVM Basic - ClassLoader"
 date: 2022-03-23T08:44:28+08:00
 description: "Intro to JVM's ClassLoader"
-tags: ["classloader", "jvm"]
-categories: ["java"]
+tags: ["classloader"]
+categories: ["java", "jvm"]
 author: "Zac"
 draft: false
 ---
+
+类加载顾名思义就是把类加载到 JVM 中，而输入一段二进制流到内存，之后经过一番解析、处理转化成可用的 class 类，这就是类加载要做的事情。
+
+二进制流可以来源于 class 文件，或者通过字节码工具生成的字节码或者来自于网络都行，只要符合格式的二进制流，JVM 来者不拒。
+
+类加载流程分为加载、连接、初始化三个阶段，连接还能拆分为：验证、准备、解析三个阶段。
+
+<!-- more -->
 
 ## 类加载器（ClassLoader）
 
@@ -118,11 +126,11 @@ class CustomClassLoader : ClassLoader() {
   加载 *.class* 文件后，JVM 在堆中创建该文件对应的 Class 类型对象。可以使用此 Class 对象来获取类级别（class level）的信息，如类名、父类名、方法（`Class.getdeclaredMethods()`）和变量信息（`Class.getDeclaredFields()`）等。
 + **连接（Linking）**
   
-  执行 Verification、Preparation 和 Resolution。
+  连接可分为:验证（Verification）、准备（Preparation）、解析（Resolution）。
 
-  + Verification：通过检查 *.class* 文件是否正确的格式化和是否由有效的编译器生成，确保该文件的正确性。如果验证失败，将抛出运行时异常：*java.lang.VerifyError*。
-  + Preparation：JVM 为类变量分配内存，并将内存初始化为默认值。
-  + Resolution：这是用直接引用(direct references)替换类型中的符号引用(symbolic references)的过程。通过搜索方法区域以找到引用的实体来完成此操作。
+  + 验证：通过检查 *.class* 文件是否正确的格式化和是否由有效的编译器生成，确保该文件的正确性。如果验证失败，将抛出运行时异常：*java.lang.VerifyError*。
+  + 准备：JVM 为类变量分配内存，并将内存初始化为默认值。
+  + 解析：这是用直接引用(direct references)替换类型中的符号引用(symbolic references)的过程。通过搜索方法区域以找到引用的实体来完成此操作。
 
 + **初始化（Initialization）**
   

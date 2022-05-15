@@ -2,8 +2,8 @@
 title: "JVM Basic - Rumtime Data Area"
 date: 2022-03-24T08:44:28+08:00
 description: "Intro to JVM's Rumtime Data Area"
-tags: ["jvm", "rumtime data area"]
-categories: ["java"]
+tags: ["jmm", "rumtime data area"]
+categories: ["java", "jvm"]
 draft: false
 ---
 

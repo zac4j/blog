@@ -2,7 +2,7 @@
 title: "Java Basic"
 date: 2020-07-03T09:28:31+08:00
 description: "Java Fundamental"
-tags: ["java"]
+tags: ["java", "fundamental"]
 categories: ["java", "basic"]
 draft: false
 ---
@@ -37,15 +37,31 @@ draft: false
   + 基础知识的扎实程度
   + 候选人对技术的热情
   
-## 2.Java 中操作字符串有那些类？它们之间有什么区别？
+## 2. String、StringBuffer、StringBuilder 有什么区别？
 
-+ 主要有：String，StringBuilder，StringBuffer
-+ 区别：StringBuffer 和 StringBuilder 都继承自 AbstractStringBuilder，StringBuffer 具备线程安全性
-  + **加分项**：String 源码分析
-    + String 是 *final* 关键字修饰 -> 对象的值不可变 -> 每次操作都会生成新的对象
-    + StringBuffer 和 StringBuilder 对象的值可变，但拼接字符串开销比较小
-  + **加分项**：StringBuffer 线程安全性分析（查源码、找 synchronized、线程锁）
+### 经典回答
+
++ String 是典型的 Immutable 类，被声明为 *final* class，所有属性也都是 final 的，因此类似拼接、裁剪字符串的操作都会产生新的 String 对象，过多的进行这种操作对应用性能有影响。
++ StringBuffer 为了解决 String 拼接产生对象而提供的类，我们可以用 append 或 add 方法，进行字符串的拼接，StringBuffer 本质是线程安全的序列，它保证了线程安全，也随之带来额外的性能开销，所以除非有线程安全的需要，不然推荐使用 StringBuilder。
++ StringBuilder 是 Java 1.5 中新增的，在能力上和 StringBuffer 没有本质区别，但是它去掉了线程安全的部分，有效减小了开销，是绝大部分情况下进行字符串拼接的首选。
 + 使用场景：并发必选 StringBuffer，迭代必选 StringBuilder，普通场景选 String，避免中途不必要的类型转换开销
+
+### 引申问题
+
+String 为什么设计成final的？
+
++ 安全性
+  + 线程安全，Immutable 天生线程安全
+  + String常被用作HashMap的key，如果可变会引有安全问题，如两个key相同 （3）
+  + String常被用作数据库或接口的参数，可变的话也会有安全问题
++ 效率
+  + 通过字符串池可以节省很多空间
+  + 每个String对应一个hashcode，再次使用的话不用重新计算
+
+### 知识扩展
+
++ String 是 Immutable 类的典型实现，原生的保证了基础线程安全，因为你无法对它内部数据进行任何修改，这种便利甚至体现在拷贝构造函数中，由于不可变，Immutable 对象在拷贝时不需要额外复制数据。
++ 为了实现修改字符串序列的目的，StringBuffer 和 StringBuilder 底层都是利用可修改的（char，JDK 9 以后是 byte）数组，两者都继承自 AbstractStringBuilder，实现的方法区别就是是否加了 synchronized.
   
 ## 3.HashMap、HashTable、TreeMap 有什么区别？
 
@@ -162,7 +178,11 @@ public class AnonymousClasses {
 
 [sc]:https://docs.oracle.com/javase/tutorial/reflect/member/methodparameterreflection.html#implcit_and_synthetic
 
-## 5.[引用类型][ref]
+## 5. 强引用、软引用、弱引用、虚引用有什么区别？具体使用场景是什么？
+
+### 经典回答
+
+不同的引用类型，主要体现的是**对象不同的可达性（reachable）状态**和**对垃圾收集的影响**。
 
 Java 中引用类型分为 4 类：强引用、软引用、弱引用、虚引用
 
@@ -170,17 +190,58 @@ Java 中引用类型分为 4 类：强引用、软引用、弱引用、虚引用
 + 软引用：软引用通过 SoftReference 实现，它的生命周期比强引用短，在内存不足，抛出 OOM 之前，GC 会回收软引用的对象。
   + **不建议使用软引用做缓存**，运行时并没有足够的信息确定哪些引用需要保留，哪些需要清除，引用对象清除太早造成不必要的工作，引用清除太晚造成浪费内存。
   + 大多数 App 需要使用 LruCache 取代软引用。LruCache 具有有效的逐出策略，并允许用户调整分配的内存量。
-+ 弱引用：弱引用通过 WeakReference 实现，它的生命周期比软引用短，GC 只要扫描到弱引用就会回收。App 中的用途是解除一些强引用的场景，如 Handler 对 Activity 的引用。
++ [弱引用][weak-ref]：弱引用通过 WeakReference 实现，它的生命周期比软引用短，GC 只要扫描到弱引用就会回收。App 中的用途是解除一些强引用的场景，如 Handler 对 Activity 的引用。
 + 虚引用：虚引用通过 PhantomReference 实现，它的生命周期最短，随时可能被回收。如果一个对象被虚引用引用，那么我们无法通过虚引用来访问这个对象的任何属性和方法。
 
 ## 6. Exception 和 Error 的异同
 
-+ Exception 和 Error 都继承自 Throwable，在 Java 中，只有 Throwable 类型的对象才能被 throw 或 catch，它是异常处理机制的基本组成类型。
-+ Exception 和 Error 体现了 Java 对不同异常情况的分类。
-  + Exception 是在程序正常运行中，可以预料的意外情况，并且可以被捕获，进行相应的处理。Exception 又分为 checked Exception 和 unchecked Exception。
-    + checked Exception 在代码必须显式的进行捕获，如 IOException, ClassCastException, 这是编译检查的一部分。
-    + unchecked Exception 也就是 RuntimeException，类似 NullPointerException、IndexOutOfBoundsException 等，通常是可以避免的逻辑错误，需要根据具体需求来判断，编译器检查时不要求捕获。
-  + Error 是指在正常情况下，不大可能出现的情况，绝大部分 Error 都会使 App 处于崩溃，非正常且不可恢复的状态，如 OutOfMemeoryError，StackOverflowError 等，不建议捕获。
+### 经典回答
+
+Exception 和 Error 都是继承了 Throwable 类，在 Java 中只有 Throwable 类型的实例才可以被抛出（throw）或者捕获（catch），它是异常处理机制的基本组成类型。
+
+Exception 和 Error 体现了 Java 平台设计者对不同异常情况的分类。Exception 是程序正常运行中，可以预料的意外情况，可能并且应该被捕获，进行相应处理。Error 是指在正常情况下，不大可能出现的情况，绝大部分的 Error 都会导致程序（比如 JVM 自身）**处于非正常的、不可恢复状态**。既然是非正常情况，所以不便于也不需要捕获，常见的比如 OutOfMemoryError 之类，都是 Error 的子类。
+
+Exception 又分为可检查（checked）异常和不检查（unchecked）异常，可检查异常在源代码里必须显式地进行捕获处理，这是编译期检查的一部分。前面我介绍的不可查的 Error，是 Throwable 不是 Exception。不检查异常就是所谓的运行时异常，类似 NullPointerException、ArrayIndexOutOfBoundsException 之类，通常是可以编码避免的逻辑错误，具体根据需要来判断是否需要捕获，并不会在编译期强制要求。
+
+### 一些常见的 Exception 和 Error
+
+![ex-er](/img/exception-error.webp)
+
+### 引申问题
+
++ NoClassDefFoundError 和 ClassNotFoundException 有什么区别？
+  + NoClassDefFoundError是一种Error，Error在大多数情况下代表无法从程序中恢复的致命错误，产生的原因在于JVM或者ClassLoader在运行时类加载器在classpath下找不到需要的类定义（编译期是可以正常找到的，所以和ClassNotFoundException不同的是这是一个运行期的Error），这个时候虚拟机就会抛出NoClassDefFoundError，通常造成该ERROR的原因是打包过程中漏掉了部分类，或者 jar 包出现损坏或篡改，对应的 Class 在 classpath 中不可用等等原因。解决这个问题的办法是查找那些在开发期间存在于类路径下但在运行期间却不在类路径下的类。
+  + ClassNotFoundException是属于Exception的运行时异常，因此是可检查异常；大多是可以从代码中恢复的异常类型，导致该异常的原因是因为java支持反射方式在运行时动态加载类，如使用Class.forName()/ClassLoader.loadClass()/ClassLoader.findSystemClass()方法动态的加载类信息，但是这个类在类路径中并没有被找到，那么就会在运行时抛出 ClassNotFoundException。解决该问题需要确保所需的类连同它依赖的包存在于类路径中，常见问题在于类名书写错误。另外还有一个导致ClassNotFoundException的原因就是：当一个类已经某个类加载器加载到内存中了，此时另一个类加载器又尝试着动态地从同一个包中加载这个类。通过控制动态类加载过程，可以避免上述情况发生。
+
+## 7. 谈谈 final、finally、finalize 有什么不同
+
+### 经典回答
+
+final 可以用来修饰类、方法、变量，分别有不同的意义，final 修饰的 class 代表不可以继承扩展，final 的变量是不可以修改的，而 final 的方法也是不可以重写的（override）。
+
+finally 则是 Java 保证重点代码一定要被执行的一种机制。我们可以使用 try-finally 或者 try-catch-finally 来进行类似关闭 JDBC 连接、保证 unlock 锁等动作。
+
+finalize 是基础类 java.lang.Object 的一个方法，它的设计目的是保证对象在被垃圾收集前完成特定资源的回收。finalize 机制现在已经不推荐使用，并且在 JDK 9 开始被标记为 deprecated。
+
+### 引申问题
+
++ 使用 final 有哪些好处？
+  + 我们可以将方法或者类声明为 final，这样就可以明确告知别人，这些行为是不许修改的。
+  + 使用 final 修饰参数或者变量，也可以清楚地避免意外赋值导致的编程错误，甚至，有人明确推荐将所有方法参数、本地变量、成员变量声明成 final。
+  + final 变量产生了某种程度的不可变（immutable）的效果，所以，可以用于保护只读数据，尤其是在并发编程中，因为明确地不能再赋值 final 变量，有利于减少额外的同步开销，也可以省去一些防御性拷贝的必要。
+  + 很多文章或者书籍中都介绍了 final 可在特定场景提高性能，比如，利用 final 可能有助于 JVM 将方法进行内联，可以改善编译器进行条件编译的能力等等
+
++ finally 推荐使用 try-with-resources 语句，try(java.lang.AutoCloseable 的实现类)中的资源会被自动关闭，并且将先关闭后声明的资源。
+
+## 8. 谈谈 Java 反射机制，动态代理是基于什么原理
+
+### 经典回答
+
+反射机制是 Java 语言提供的一种基础功能，赋予程序在运行时自省（introspect）的能力。通过反射我们可以直接操作类或者对象，比如获取某个对象的类定义，获取类声明的属性和方法，调用方法或者构造对象，甚至可以运行时修改类定义。
+
+动态代理是一种方便运行时动态构建代理、动态处理代理方法调用的机制，很多场景都是利用类似机制做到的，如用来包装 RPC 调用、面向切面的变成（AOP）。
+
+实现动态代理的方式很多，比如 JDK 自身提供的动态代理，就是利用了反射机制。还有其他的实现方式，如据说高性能的字节码操作机制，类似 ASM、cglib、Javassist 等。
 
 ## volatile
 
@@ -260,5 +321,5 @@ volatile 的原理是在生成的汇编代码中多了一个 #LOCK 前缀指令�
 + 修改缓存中的共享变量后立即刷新到主存中
 + 当执行写操作时会导致其他 CPU 中的缓存无效。
 
-[ref]:https://community.oracle.com/blogs/enicholas/2006/05/04/understanding-weak-references
+[weak-ref]:https://community.oracle.com/blogs/enicholas/2006/05/04/understanding-weak-references
 [cache]:https://lwn.net/Articles/252125/

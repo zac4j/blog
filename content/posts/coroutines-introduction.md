@@ -3,7 +3,7 @@ title: "Coroutines Introduction"
 date: 2020-04-25T11:40:03+08:00
 description: "Coroutines Intro"
 tags: ["coroutines"]
-categories: ["kotlin"]
+categories: ["kotlin", "concurrent"]
 author: "Zac"
 ---
 

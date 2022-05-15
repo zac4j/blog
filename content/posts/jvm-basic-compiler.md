@@ -2,8 +2,8 @@
 title: "JVM Basic - Compiler"
 date: 2020-07-17
 description: "Intro to JVM compiler"
-tags: ["jvm"]
-categories: ["jvm"]
+tags: ["compiler"]
+categories: ["java", "jvm"]
 draft: false
 ---
 

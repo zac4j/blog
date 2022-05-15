@@ -2,8 +2,8 @@
 title: "JVM a brief intro"
 date: 2022-04-18T21:28:09+08:00
 description: "A brief intro to JVM(Hotspot) architecture"
-tags: ["basic", "jvm", "hotspot"]
-categories: ["java"]
+tags: ["basic", "hotspot"]
+categories: ["java", "jvm"]
 author: "Zac"
 draft: true
 ---

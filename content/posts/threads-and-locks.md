@@ -3,7 +3,7 @@ title: "Process, Threads and Locks"
 date: 2020-07-27
 description: "Process, Threads and locks"
 tags: ["thread", "process", "lock"]
-categories: ["java"]
+categories: ["java", "concurrent"]
 draft: false
 ---
 

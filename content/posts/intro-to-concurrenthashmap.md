@@ -3,7 +3,7 @@ title: "Intro to ConcurrentHashMap"
 date: 2020-07-15T15:11:27+08:00
 description: "HashMap introduction"
 tags: ["hashmap", "concurrenthashmap", "map"]
-categories: ["data structure"]
+categories: ["data structure", "concurrent"]
 draft: false
 ---
 
