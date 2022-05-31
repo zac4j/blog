@@ -21,7 +21,7 @@ Hash table based implementation of the Map interface.  This implementation provi
 
 The HashMap class is roughly equivalent to Hashtable, except that it is unsynchronized and permits nulls. This class makes no guarantees as to the order of the map; in particular, it does not guarantee that the order will remain constant over time.
 
-HashMap 和 HashTable 大致等效，除了 HashMap 是非同步的，以及允许空值。无法保证顺序随着时间的推移保持不变。
+HashMap 和 Hashtable 大致等效，除了 HashMap 是非同步的，以及允许空值。无法保证顺序随着时间的推移保持不变。
 
 This implementation provides **constant-time** performance for the basic operations (get and put),assuming the hash function disperses the elements properly among the buckets.
 
@@ -215,7 +215,7 @@ final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
 
 ``` java
 
-static final int hash(Object kye) {
+static final int hash(Object key) {
     int h;
     return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>>16;
 }

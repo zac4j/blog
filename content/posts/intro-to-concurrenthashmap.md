@@ -1,102 +1,303 @@
 ---
 title: "Intro to ConcurrentHashMap"
-date: 2020-07-15T15:11:27+08:00
-description: "HashMap introduction"
+date: 2022-05-23T15:11:27+08:00
+description: "ConcurrentHashMap introduction"
 tags: ["hashmap", "concurrenthashmap", "map"]
 categories: ["data structure", "concurrent"]
-draft: false
+author: "杨晓峰·geektime"
+draft: true
 ---
 
-Hash table based implementation of the Map interface.  This implementation provides all of the optional map operations, and permits null values and the null key.
+Java 提供了不同层面的线程安全支持。在传统集合框架内部，除了 Hashtable 等容器，还提供了同步包装器（Synchronized Wrapper），我们可以通过 Collections 工具类提供的包装方法来获取同步包装器，如 Collections.synchronizedMap，但是它们利用的都是粗粒度的同步方式，在高并发情况下，性能比较底下。
 
 <!--more-->
 
-## HashMap 介绍
+除了同步包装器，我们更加普遍的选择是使用并发包（java.util.concurrent）提供的线程容器类：
 
-The HashMap class is roughly equivalent to Hashtable, except that it is unsynchronized and permits nulls. This class makes no guarantees as to the order of the map; in particular, it does not guarantee that the order will remain constant over time.
++ 并发容器，如 ConcurrentHashMap、CopyOnWriteArrayList
++ 线程安全队列，如 ArrayBlockingQueue、SynchronousQueue。
++ 各种有序容器的线程安全版本等。
 
-HashMap 和 HashTable 大致等效，除了 HashMap 是非同步的，以及允许空值。无法保证顺序随着时间的推移保持不变。
+## 为什么需要 ConcurrentHashMap
 
-This implementation provides **constant-time** performance for the basic operations (get and put),assuming the hash function disperses the elements properly among the buckets.
+Hashtable 本身比较低效，因为它的实现基本就是将 put、get、size 等各种方法加上 *synchronized* 关键字。简单来说，这就导致了所有并发操作都要竞争同一把锁，一个线程在进行同步操作时，其他线程只能等待，大大降低了并发操作的效率。
 
-假设 hash 函数将元素分散在正确的 bucket 中，HashMap 对于基本操作(get 或 put) 会提供恒定时间的性能。
+前面提到的 HashMap 不是线程安全的，并发情况会导致类似 CPU 占用 100% 等一些问题，那么能不能利用 Collections 提供的 Synchronized Wrapper 来解决问题呢？
 
-### 何为 constant time
+我们可以看下 SynchronizedMap 的实现，虽然所有操作不声明为 synchronized 方法，但还是利用了 this 作为互斥的 mutex，这种版本不适合高并发的场景。
 
-constant time 是表示时间复杂度的一个示例，常见时间复杂度的描述：
+``` java
+private static class SynchronizedMap<K,V> implements Map<K,V>, Serializable {
+    private final Map<K,V> m;     // Backing Map
+    final Object mutex;        // Object on which to synchronize
+    // …
+    public int size() {
+        synchronized (mutex) {return m.size();}
+    }
+ // … 
+}
+```
 
-| Time complexity | Time description   |
-|-----------------|--------------------|
-| O(1)            | Constant time      |
-| O(log n)        | Logarithmic time   |
-| O(n)            | Linear time        |
-| O(n log n)      | Pseudo-linear time |
-| O(n^c)          | Polynomial time    |
-| O(c^n)          | Exponential time   |
-| O(n!)           | Factorial time     |
+我们再来看看 ConcurrentHashMap 是如何设计实现的，为什么它能大大提高并发效率。
 
-Iteration over collection views requires time proportional to the "capacity" of the HashMap instance (the number of buckets) plus its size (the number of key-value mappings).
+实际上 ConcurrentHashMap 的设计实现一直在演化，这里我们基于 JDK8 和之前的版本做比较。
 
-从集合视角看，迭代所需的时间与 HashMap 实例的“容量”（ bucket 数量 ）及其大小（键-值映射数）成正比。
+### JDK7 ConcurrentHashMap 的[实现][older] 基于
 
-Thus, it's very important not to set the initial capacity too high (or the load factor too low) if iteration performance is important.
++ 分离锁，也就是将内部进行分段（Segment），里面则是 HashEntry 的数组，和 HashMap 类似，hash 相同的条目也是以链表形式存放。
++ HashEntry 内部使用 volatile 的 value 字段来保证可见性，也利用了不可变的机制以改进利用 **Unsafe** 提供的底层能力，如 volatile access，去直接完成部分操作，以优化性能。
 
-因此，如果迭代性能很重要，那么不要将初识容量设置过高（或负载因子设置过低），这很关键。
+``` java
+static final class HashEntry<K,V> {
+    final int hash;
+    final K key;
+    volatile V value;
+    volatile HashEntry<K,V> next;
+    ...
+}
+```
 
-An instance of HashMap has two parameters that affect its performance：
+JDK7 中 ConcurrentHashMap 的结构图
 
-有两个参数会影响 HashMap 实例的性能：
+![old-impl](/img/concurrenthashmap-jdk7.webp)
 
-+ initial capacity 初始容量
-+ load factor 负载因子
+其核心是利用分段设计，在进行并发操作的时候，只需要锁定相应段，这样就有效避免了类似 Hashtable 整体同步的问题，大大提高了性能。
 
-The capacity is the number of buckets in the hash table, and the initial capacity is simply the capacity at the time the hash table is created. The load factor is a measure of how full the hash table is allowed to get before its capacity is automatically increased.
+Segment 由 concurrencyLevel，默认值（DEFAULT_CONCURRENCY_LEVEL）是 16，concurrencyLevel 也可以在构造函数里指定。
 
-容量是哈希表中 bucket 的数量，初始容量即是创建哈希表时的容量。负载因子用来评估哈希表填满的程度，以自动增长容量。
+可以看看 JDK7 里 ConcurrentHashMap 的 get 方法。
 
-When the number of entries in the hash table exceeds the product of the load factor and the current capacity, the hash table is rehashed (that is, internal data structures are rebuilt) so that the hash table has approximately twice the number of buckets.
+``` java
 
-当哈希表中的条目数超过负载因子和当前容量的乘积时，哈希表将被重新映射（即内部数据结构将被重建），以使哈希表的 bucket 数大约为两倍。
+public V get(Object key) {
+    Segment<K,V> s; // manually integrate access methods to reduce overhead
+    HashEntry<K,V>[] tab;
+    int h = hash(key.hashCode());
+    //利用位操作替换普通数学运算
+    long u = (((h >>> segmentShift) & segmentMask) << SSHIFT) + SBASE;
+    // 以Segment为单位，进行定位
+    // 利用Unsafe直接进行volatile access
+    if ((s = (Segment<K,V>)UNSAFE.getObjectVolatile(segments, u)) != null &&
+        (tab = s.table) != null) {
+        //省略
+        }
+    return null;
+}
+```
 
-As a general rule, the default load factor (0.75) offers a good tradeoff between time and space costs. Higher values decrease the space overhead but increase the lookup cost (reflected in most of the operations of the HashMap class, including get and put).  
+对于 put 操作，首先是通过二次 hash 避免哈希冲突，然后以 Unsafe 调用方式，直接获取相应的 Segment，然后进行线程安全的 put 操作：
 
-通常，默认负载因子（0.75）在时间和空间成本之间提供了一个很好的权衡。较高的值会减少空间开销，但会增加查找成本（反应在 HashMap 类的大多数操作中，包括 get 和 put）。
+``` java
+public V put(K key, V value) {
+    Segment<K,V> s;
+    if (value == null)
+        throw new NullPointerException();
+    // 二次哈希，以保证数据的分散性，避免哈希冲突
+    int hash = hash(key.hashCode());
+    int j = (hash >>> segmentShift) & segmentMask;
+    if ((s = (Segment<K,V>)UNSAFE.getObject          // nonvolatile; recheck
+            (segments, (j << SSHIFT) + SBASE)) == null) //  in ensureSegment
+        s = ensureSegment(j);
+    // 在 Segment 中进行 put 操作
+    return s.put(key, hash, value, false);
+}
+```
 
-The expected number of entries in the map and its load factor should be taken into account when setting its initial capacity, so as to minimize the number of rehash operations.  
+其核心逻辑实现在下面的内部方法中：
 
-设置其初始容量时，应考虑 map 中的预期条目数及其负载因子，以最大程度地减少重新映射操作的次数。
+``` java
 
-If the initial capacity is greater than the maximum number of entries divided by the load factor, no rehash operations will ever occur.
+final V put(K key, int hash, V value, boolean onlyIfAbsent) {
+    // scanAndLockForPut 会去查找是否有 key 相同 Node
+    // 无论如何，确保获取锁
+    HashEntry<K,V> node = tryLock() ? null : scanAndLockForPut(key, hash, value);
+    V oldValue;
+    try {
+        HashEntry<K,V>[] tab = table;
+        int index = (tab.length - 1) & hash;
+        HashEntry<K,V> first = entryAt(tab, index);
+        for (HashEntry<K,V> e = first;;) {
+            if (e != null) {
+                K k;
+                // 更新已有 value...
+            }
+            else {
+                // 放置 HashEntry 到特定位置，如果超过阈值，进行rehash
+                // ...
+            }
+        }
+    } finally {
+        unlock();
+    }
+    return oldValue;
+}
 
-如果初始容量大于最大条目数除以负载因子，则将不会发生任何映射操作。
+```
 
-If many mappings are to be stored in a HashMap instance, creating it with a sufficiently large capacity will allow the mappings to be stored more efficiently than letting it perform automatic rehashing as needed to grow the table.
+从上面的源码可以看出，在进行并发写操作时：
 
-如果将许多映射关系存储在 HashMap 实例中，创建足够大容量的 map 将比让其按需自动增长哈希表重新映射，更有效的存储映射。
++ ConcurrentHashMap 会获取重入锁，以保证数据一致性，Segment 本身就扩展实现自 ReentrantLock，所以在并发修改期间，相应的 Segment 会被锁定。
++ 在最初阶段，进行重复性的扫描，以确定相应 key 值是否已经在数组里面，进而决定是更新还是放置操作。
++ 和 HashMap 扩容不同，ConcurrentHashMap 不是整体的扩容，而是单独对 Segment 进行扩容。
 
-Note that using many keys with the same {@code hashCode()} is a sure way to slow down performance of any hash table. To ameliorate impact, when keys are {@link Comparable}, this class may use comparison order among keys to help break ties.
+ConcurrentHashMap 还有个 size 方法，它的实现涉及分离锁的一个副作用。
 
-注意，使用许多具有相同 hashCode 的键是降低任何哈希表性能的方法。为了改善影响，当键是可比较时(Comparable)时，此类可以使用键之间的比较顺序来帮助打破平衡。
+试想，如果不进行同步，简单的计算所有 Segment 的总值，可能会因为并发 put，导致结果不准确，但是直接锁定所有 Segment 进行计算，就会变得非常昂贵。其实，分离锁也限制了 Map 的初始化等操作。
 
-Note that this implementation is not synchronized. If multiple threads access a hash map concurrently, and at least one of the threads modifies the map structurally, it must be synchronized externally. (A structural modification is any operation that adds or deletes one or more mappings; merely changing the value associated with a key that an instance already contains is not a structural modification.) This is typically accomplished by synchronizing on some object that naturally encapsulates the map.
+所以，ConcurrentHashMap 的实现是通过重试机制（RETRIES_BEFORE_LOCK，指定重试次数 2），来试图获得可靠值。如果没有监控到发生变化（通过对比 Segment.modCount），就直接返回，否则获取锁进行操作。
 
-注意，这个实现并不是同步的。如果多线程同时访问 hash map，并且至少有一个线程在结构上修改了 map，则必须在外部进行同步。（结构型修改是指增删一个或多个映射关系，更新某个 key 对应的值并不是结构型修改）。通常是对封装 map 的某个对象加同步来实现。
+### Java8 版本中，ConcurrentHashMap 有哪些变化呢？
 
-If no such object exists, the map should be "wrapped" using the {@link Collections#synchronizedMap Collections.synchronizedMap} method.  This is best done at creation time, to prevent accidental unsynchronized access to the map: Map m = Collections.synchronizedMap(new HashMap(...));
++ 总体结构上，它的内部存储和 HashMap 结构非常相似，同样是以 bucket 数组，然后内部也是一个个所谓的链表结构（bin），同步的粒度更细致一些。
++ 其内部仍有 Segment 定义，但仅为了保证序列化的兼容性，不再有任何结构上的用处。
++ 因为不再使用 Segment，初始化操作大大简化，修改为 lazy load 模式，这样可以有效避免初始化开销。
++ 数据存储利用 volatile 来保证可见性。
++ 使用 CAS 等操作，在特定场景进行无锁并发操作。
++ 使用 Unsafe、LongAdder 等底层手段，进行极端情况优化。
 
-如果没有这样的对象存在，则应该使用 Collections.synchronizedMap 方法来包装 map，最好是在创建时完成，以避免意外不同步地访问 map：`Map m = Collections.synchronizedMap(new HashMap(...));`
+存储实现为 Node<K, V>，和 HashMap 比较类似，不同点是 ConcurrentHashMap 里 value 和 next Node 都声明为 volatile，保证可见性。
 
-The iterators returned by all of this class's "collection view methods" are fail-fast: if the map is structurally modified at any time after the iterator is created, in any way except through the iterator's own remove method, the iterator will throw a {@link ConcurrentModificationException}.  Thus, in the face of concurrent modification, the iterator fails quickly and cleanly, rather than risking arbitrary, non-deterministic behavior at an undetermined time in the future.
+``` java
+static class Node<K,V> implements Map.Entry<K,V> {
+    final int hash;
+    final K key;
+    volatile V val;
+    volatile Node<K,V> next;
+    // ...
+}
+```
 
-此类的所有“集合视角方法”返回的迭代器都是 [fast fail][ff] 的：在创建迭代器之后任何时刻对 map 结构进行了修改，除了通过迭代器自已的 remove 方法以外，该迭代器都会抛出 ConcurrentModificationException。因此，面对并发修改，迭代器会快速干净的 fail，而不是在未来的不确定时间冒着任意，不确定行为的风险。
+我们看看 get 方法的实现
 
-### 何为 fast fail
+``` java
+final V putVal(K key, V value, boolean onlyIfAbsent) {
+    if (key == null || value == null) throw new NullPointerException();
+    int hash = spread(key.hashCode());
+    int binCount = 0;
+    for (Node<K,V>[] tab = table;;) {
+        Node<K,V> f; int n, i, fh;
+        if (tab == null || (n = tab.length) == 0)
+            // 初始化操作
+            tab = initTable();
+        else if ((f = tabAt(tab, i = (n - 1) & hash)) == null) {
+            // Bin 为空时，利用 CAS 进行无锁线程安全操作
+            if (casTabAt(tab, i, null, new Node<K,V>(hash, key, value, null)))
+                break;
+        }
+        else if ((fh = f.hash) == MOVED)
+            tab = helpTransfer(tab, f);
+        else {
+            V oldVal = null;
+            synchronized (f) {
+                // 细粒度同步修改操作
+                if (tabAt(tab, i) == f) {
+                    if (fh >= 0) {
+                        // ...
+                    }
+                    else if (f instanceof TreeBin) {
+                        // ...
+                    }
+                    else if (f instanceof ReservationNode)
+                        throw new IllegalStateException("Recursive update");
+                }
+            }
+            // Bin 超过阀值，进行树化
+            if (binCount != 0) {
+                if (binCount >= TREEIFY_THRESHOLD)
+                    treeifyBin(tab, i);
+                if (oldVal != null)
+                    return oldVal;
+                break;
+            }
+        }
+    }
+    addCount(1L, binCount);
+    return null;
+}
+```
 
-Note that the fail-fast behavior of an iterator cannot be guaranteed as it is, generally speaking, impossible to make any hard guarantees in the presence of unsynchronized concurrent modification.  Fail-fast iterators throw ConcurrentModificationException on a best-effort basis. Therefore, it would be wrong to write a program that depended on this exception for its correctness: the fail-fast behavior of iterators should be used only to detect bugs.
+这里同步使用了 synchronized 关键字，为何没用通常建议的 ReentrantLock 呢，这是因为现代 JDK 中，synchronized 已被不断优化，可以不再担心性能差异，而且相较于 ReentrantLock，synchronized 可以减少内存消耗。
 
-注意不能保证迭代器的 fast fail 行为，一般来说，在存在不同步的并发修改情况下，不可能作出任何严格的保证。因此，编写依赖于此异常的程序的正确性是错误的：迭代器的 fast fail 行为仅用于错误检测。
+tabAt 的实现直接利用了 Unsafe.getObjectAcquire 进行优化，避免间接调用的开销。
 
-This class is a member of the [Java Collections Framework][jcf]
+``` java
+/*
+ * Volatile access methods are used for table elements as well as
+ * elements of in-progress next table while resizing.  All uses of
+ * the tab arguments must be null checked by callers.  All callers
+ * also paranoically precheck that tab's length is not zero (or an
+ * equivalent check), thus ensuring that any index argument taking
+ * the form of a hash value anded with (length - 1) is a valid
+ * index.  Note that, to be correct wrt arbitrary concurrency
+ * errors by users, these checks must operate on local variables,
+ * which accounts for some odd-looking inline assignments below.
+ * Note that calls to setTabAt always occur within locked regions,
+ * and so in principle require only release ordering, not
+ * full volatile semantics, but are currently coded as volatile
+ * writes to be conservative.
+ */
+static final <K,V> Node<K,V> tabAt(Node<K,V>[] tab, int i) {
+    return (Node<K,V>)U.getObjectVolatile(tab, ((long)i << ASHIFT) + ABASE);
+}
+```
 
-[ff]:https://whatis.techtarget.com/definition/fail-fast
-[jcf]:https://docs.oracle.com/javase/8/docs/technotes/guides/collections/index.html
+初始化操作在 initTable 中，这是一个典型的 CAS 使用场景，利用 volatile 的 sizeCtl 作为互斥手段：如果发现竞争性的初始化，就 spin 在那里，等待条件恢复；否则利用 CAS 设置排他标志。如果成功则进行初始化，否则重试。
+
+``` java
+/**
+ * Initializes table, using the size recorded in sizeCtl.
+ */
+private final Node<K,V>[] initTable() {
+    Node<K,V>[] tab; int sc;
+    while ((tab = table) == null || tab.length == 0) {
+        // 如果有冲突，进行 spin 等待
+        if ((sc = sizeCtl) < 0)
+            Thread.yield(); // lost initialization race; just spin
+        // CAS 成功返回 true，进入初始化逻辑
+        else if (U.compareAndSwapInt(this, SIZECTL, sc, -1)) {
+            try {
+                if ((tab = table) == null || tab.length == 0) {
+                    int n = (sc > 0) ? sc : DEFAULT_CAPACITY;
+                    @SuppressWarnings("unchecked")
+                    Node<K,V>[] nt = (Node<K,V>[])new Node<?,?>[n];
+                    table = tab = nt;
+                    sc = n - (n >>> 2);
+                }
+            } finally {
+                sizeCtl = sc;
+            }
+            break;
+        }
+    }
+    return tab;
+}
+```
+
+再看看，size 的操作，最终的实现逻辑是在 sumCount 方法中：
+
+``` java
+final long sumCount() {
+    CounterCell[] as = counterCells; CounterCell a;
+    long sum = baseCount;
+    if (as != null) {
+        for (int i = 0; i < as.length; ++i) {
+            if ((a = as[i]) != null)
+                sum += a.value;
+        }
+    }
+    return sum;
+}
+```
+
+而 CounterCell 的实现为：
+
+``` java
+static final class CounterCell {
+    volatile long value;
+    CounterCell(long x) { value = x; }
+}
+```
+
+对于 CounterCell 的操作，是基于 java.util.concurrent.atomic.LongAdder 进行的，是一种 JVM 利用空间换取更高效率的方法，利用了Striped64内部的复杂逻辑。这个东西非常小众，大多数情况下，建议还是使用 AtomicLong，足以满足绝大部分应用的性能需求。
+
+[older]:https://github.com/openjdk-mirror/jdk7u-jdk/blob/master/src/share/classes/java/util/concurrent/ConcurrentHashMap.java

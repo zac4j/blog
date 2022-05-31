@@ -4,7 +4,7 @@ date: 2022-03-29T21:46:30+08:00
 description: "Introduction to Executor"
 tags: ["executor", "thread", "threadpool"]
 categories: ["java", "concurrent"]
-draft: false
+draft: true
 ---
 
 ## Executor, ExecutorService, Executors
