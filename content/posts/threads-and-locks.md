@@ -198,17 +198,44 @@ Most implementations of the Java virtual machine run as a single process. A Java
 
 ### Threads
 
-Threads are sometimes called *lightweight processes*. Both processes and threads provide an execution environment, but creating a new thread requires fewer resources than creating a new process.
+从操作系统角度，线程是系统任务调度的最小单元，一个进程可以包含多个线程，作为任务的真正运作者，有自己的栈（Stack）、寄存器（Register）、本地存储（Thread Local）等，但是会和进程内其他线程共享文件描述符、虚拟地址空间等。
 
-线程通常被称为 *轻量级进程*。进程和线程都可以提供执行环境，但创建线程要比创建进程需要更少的资源。
+在具体实现中，线程还分为内核线程、用户线程，Java 的线程实现其实是与虚拟机相关的。对于 Oracle JDK，其线程也经历了一个演进的过程，基本上在 Java 1.2 之后，JDK 已经抛弃了早期的[Green Thread][gt]，也就是用户调度的线程，现在的模型是一对一映射到操作系统内核线程。
 
-Threads exist within a process — every process has at least one. Threads share the process's resources, including memory and open files. This makes for efficient, but potentially problematic, communication.
+通过 Thread 的源码，我们可以发现其操作逻辑大部分是以 JNI 形式调用的本地代码：
 
-线程存在于进程中 —— 每个进程至少有一个。线程分享进程资源，包括内存和打开的文件。这样可以进行高效的、但同时又可能有问题的通信。
+``` java
 
-Multithreaded execution is an essential feature of the Java platform. Every application has at least one thread — or several, if you count "system" threads that do things like memory management and signal handling. But from the application programmer's point of view, you start with just one thread, called the main thread. This thread has the ability to create additional threads, as we'll demonstrate in the next section.
+private native void start0();
+private native void setPriority0(int newPriority);
+private native void interrupt0();
+```
 
-多线程执行是 Java 平台基础的功能。每个应用至少有一个 —— 如果算上执行内存管理和信号处理的系统线程，则有多个。但从应用程序员的角度来看，我们从一个线程开始，称为*主线程（main thread）*，这个线程有能力创建别的线程。
+这种实现有利有弊，总体上来说，Java 语言得益于精细粒度的线程和相关的并发操作，其构建高扩展性的大型应用的能力已经毋庸置疑。但是，其复杂性也提高了并发编程的门槛，近几年 Go 语言等提供了协程（coroutine），大大提高了构建并发应用的效率。于此同时，Java 也在 Loom 项目中，孕育新的轻量级用户线程（Fiber）等机制。
+
+我们以线程最基本使用的例子开始：
+
+``` java
+Runnable task = () -> {System.out.print("new created task");};
+Thread t1 = new Thread(task);
+t1.start();
+t1.join();
+```
+
+使用 Runnable 的好处是，不会受 Java 不支持多继承的限制，重用代码实现，当我们需要重复执行相应逻辑时优点明显。而且可以方便的和 Executor 之类的框架结合使用，比如上面例子的逻辑可以完全写成下面的结构：
+
+``` java
+Future future = Executors.newsingleThreadExecutor()
+  .submit(task);
+  .get();
+```
+
+这样我们就不用手动管理线程的创建和结束，也能利用 Future 等机制更好地处理执行结果。线程生命周期通常和业务之间没有本质联系，混淆实现需求和业务需求，就会降低开发的效率。
+
+从线程生命周期的状态开始展开，那么在 Java 编程中，有哪些因素可能影响线程的状态呢？主要有：
+
++ 线程自身的方法，除了 start，还有多个 join 方法，等待线程结束；yield 是告诉调度器，主动让出 CPU；另外，就是一些已经被标记为 deprecated 的 resume、stop、suspend 之类的方法，比如在最新的 JDK 实现中，destroy/stop 方法已被移除
++ 基类 Object 提供了一些基础的 wait/notify/notifyAll 方法。如果我们持有某个对象的 Monitor 锁，调用 wait 会让当前线程处于等待状态，直到其他线程 notify 或者 notifyAll。所以，本质上是提供了 Monitor 的获取和释放的能力，是基本的线程间通信方式。
 
 #### Thread Objects
 
@@ -246,3 +273,4 @@ High level：
 [nst]:https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Executors.html#newSingleThreadExecutor-int-
 [pb]:https://docs.oracle.com/javase/8/docs/api/java/lang/ProcessBuilder.html
 [td]:https://docs.oracle.com/javase/8/docs/api/java/lang/Thread.html
+[gt]:https://en.wikipedia.org/wiki/Green_threads

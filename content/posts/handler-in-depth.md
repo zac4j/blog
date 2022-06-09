@@ -17,7 +17,7 @@ Handler 在使用时常见的问题
 
 Handler 在使用下面这种实现方式处理消息时:
 
-```kotlin
+``` kotlin
 class MainActivity: Activity() {
 
     private val mLeakedHandler = object: Handler() {
@@ -25,13 +25,14 @@ class MainActivity: Activity() {
             super.handleMessage(msg)
         }
     }
+}
 ```
 
 [Android Lint][lint] 会发出这样的警告: `This Handler class should be static or leaks might occur(anonymous android.os.Handler)`
 
 我们在 Handler 构造方法里可以看到：
 
-```java
+``` java
 public Handler(@Nullable Callback callback, boolean async) {
     if (FIND_POTENTIAL_LEAKS) {
         final Class<? extends Handler> klass = getClass();

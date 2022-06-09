@@ -48,4 +48,7 @@ theme = "ananke"
 + build web site: `hugo -D`
 + deploy web site: `./deploy.sh 'comments'`
 
+## Cross reference
+
 [deploy]:https://segmentfault.com/a/1190000012975914
+[cross-ref]:https://gohugo.io/content-management/cross-references/
