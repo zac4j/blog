@@ -198,6 +198,8 @@ Most implementations of the Java virtual machine run as a single process. A Java
 
 ### Threads
 
+### 什么是线程？
+
 从操作系统角度，线程是系统任务调度的最小单元，一个进程可以包含多个线程，作为任务的真正运作者，有自己的栈（Stack）、寄存器（Register）、本地存储（Thread Local）等，但是会和进程内其他线程共享文件描述符、虚拟地址空间等。
 
 在具体实现中，线程还分为内核线程、用户线程，Java 的线程实现其实是与虚拟机相关的。对于 Oracle JDK，其线程也经历了一个演进的过程，基本上在 Java 1.2 之后，JDK 已经抛弃了早期的[Green Thread][gt]，也就是用户调度的线程，现在的模型是一对一映射到操作系统内核线程。
@@ -213,7 +215,29 @@ private native void interrupt0();
 
 这种实现有利有弊，总体上来说，Java 语言得益于精细粒度的线程和相关的并发操作，其构建高扩展性的大型应用的能力已经毋庸置疑。但是，其复杂性也提高了并发编程的门槛，近几年 Go 语言等提供了协程（coroutine），大大提高了构建并发应用的效率。于此同时，Java 也在 Loom 项目中，孕育新的轻量级用户线程（Fiber）等机制。
 
-我们以线程最基本使用的例子开始：
+### 线程的生命周期
+
+Java 5 开始，线程状态定义在 java.lang.Thread.State 中，分别是：
+
++ New 表示线程被创建出来，还没真正启动的状态，可以认为是 Java 内部的状态
++ Runnable 表示线程已经在 JVM 中执行，由于执行需要计算资源，它可能正在运行，也可能在等待系统分配给它 CPU 片段，在就绪度队列中排队。
++ Blocked **阻塞**表示线程在等待 monitor lock，例如，线程试图通过 synchronized 去获取某个锁，但是其他线程已经独占了，那么当前线程就会处于阻塞状态。
++ Waiting 表示正在**等待**其他线程采取动作。例如，在生产者-消费者模型中，当任务条件未满足时，会让当前消费者先 wait，生产者去准备任务数据，准备完成后，通过 notify 动作，通知消费线程可以继续工作。
++ TIMED_WAIT 进入条件和等待状态类似，但是调用的是存在超时条件的方法，比如 wait 或 join 等方法的指定超时版本，如：
+
+``` java
+public final native void wait(long timeout) throws InterruptedException;
+```
+
++ TERMINATED 不管是意外退出还是正常执行结束，线程已经完成任务，终止运行。
+
+在第二次调用 satrt 方法的时候，线程可能处于终止或者其他状态，但是不论如何，都是不可以再次启动的。
+
+### 线程的使用
+
+#### 基本用例
+
+我们以线程最基本的用例开始：
 
 ``` java
 Runnable task = () -> {System.out.print("new created task");};
@@ -222,7 +246,7 @@ t1.start();
 t1.join();
 ```
 
-使用 Runnable 的好处是，不会受 Java 不支持多继承的限制，重用代码实现，当我们需要重复执行相应逻辑时优点明显。而且可以方便的和 Executor 之类的框架结合使用，比如上面例子的逻辑可以完全写成下面的结构：
+使用 Runnable 的好处是，不会受 Java 不持多继承的限制，重用代码实现，当我们需要重复执行相应逻辑时优点明显。而且可以方便的和 Executor 之类的框架结合使用，比如上面例子的逻辑可以完全写成下面的结构：
 
 ``` java
 Future future = Executors.newsingleThreadExecutor()
@@ -237,6 +261,88 @@ Future future = Executors.newsingleThreadExecutor()
 + 线程自身的方法，除了 start，还有多个 join 方法，等待线程结束；yield 是告诉调度器，主动让出 CPU；另外，就是一些已经被标记为 deprecated 的 resume、stop、suspend 之类的方法，比如在最新的 JDK 实现中，destroy/stop 方法已被移除
 + 基类 Object 提供了一些基础的 wait/notify/notifyAll 方法。如果我们持有某个对象的 Monitor 锁，调用 wait 会让当前线程处于等待状态，直到其他线程 notify 或者 notifyAll。所以，本质上是提供了 Monitor 的获取和释放的能力，是基本的线程间通信方式。
 
+状态和 Object 方法的关系图：
+
+![state](/img/obj-thread-state.webp)
+
+#### 守护线程
+
+有时候应用中需要一个长期驻留的服务程序，但是不希望其影响应用退出，就可以将其设置为**守护线程**（Daemon Thread），如果 JVM 发现只有守护线程存在时，将结束进程。
+
+``` java
+Thread dt = new Thread();
+// 必须在启动前设置 daemon flag
+dt.setDaemon(true);
+dt.start();
+```
+
+#### Spurious wakeup
+
+在多核 CPU 系统中，线程等待存在一种可能，就是在没有任何线程广播或者发出信号的情况下，线程就被唤醒，如果处理不当就会出现诡异的并发问题，所以在线程等待的过程中，建议采用下面的模版来写：
+
+``` java
+// 推荐
+while(isCondition) {
+  waitForCondition();
+}
+
+// 不推荐
+if (isCondition()) {
+  waitForCondition();
+}
+```
+
+Thread.onSpinWait() Java 9 引入的特性。自旋锁（spin-wait，busy-waiting），也可以认为其不算是一种锁，而是一种针对短期等待的性能优化技术。`onSpinWait()` 没有任何行为上的保证，而是对 JVM 的一种暗示，JVM 可以利用 CPU 的 pause 指令进一步提高性能，性能特别敏感的应用可以关注。
+
+#### ThreadLocal
+
+慎用 ThreadLocal，这是 Java 提供的一种保证线程私有信息的机制，因为其在整个线程生命周期内有效，所以可以方便地在一个线程关联的不同业务模块之前传递信息，比如事务 ID、Cookie 等上下文信息。
+
+数据存储于线程相关的 ThreadLocalMap，内部条目是弱引用：
+
+``` java
+static class ThreadLocalMap {
+  static class Entry extends WeakReference<ThreadLocal<?>> {
+    // The value associate with this ThreadLocal.
+    Object value;
+    Entry(ThreadLocal<?> k, Object v) {
+      super(k);
+      value = v;
+    }
+  }
+}
+```
+
+当 key 为 null 时，该条目就变成“废弃条目”，相关 value 的回收，往往依赖于几个关键点，即 set、remove、rehash.
+
+下面是 set 方法简单的示例：
+
+``` java
+private void set(ThreadLocal<?> key, Object value) {
+  Entry[] tab = table;
+  int len = tab.length;
+  int i = key.threadLocalHashCode & (len-1);
+
+  for (Entry e = tab[i];; …) {
+      //…
+      if (k == null) {ß
+          // 替换废弃条目
+          replaceStaleEntry(key, value, i);
+          return;
+      }
+  }
+  tab[i] = new Entry(key, value);
+  int sz = ++size;
+  // 扫描并清理发现的废弃条目，并检查容量是否超限
+  if (!cleanSomeSlots(i, sz) && sz >= threshold)
+      rehash();// 清理废弃条目，如果仍然超限，则扩容（加倍）
+}
+```
+
+具体的逻辑实现在 cleanSomeSlots 和 expungeStaleEntry 方法中。
+
+通常弱引用都会和引用队列配合清理机制使用，ThreadLocal 是个例外，stale entry 的回收依赖于显式地出发，否则就要等待线程结束，进而回收相应 ThreadLocalMap！这就是很多 OOM 的来源，所以通常都会建议，应用一定要自己负责 remove，并且不要和线程池配合，因为 worker 线程往往是不会退出的。
+
 #### Thread Objects
 
 每个线程都与一个 [Thread][td] 相关。有两种策略使用 *Thread* 对象创建并发应用。
@@ -244,10 +350,11 @@ Future future = Executors.newsingleThreadExecutor()
 + 直接控制线程的创建和管理，每次应用需要启动异步任务时，只需实例化 *Thread*。
 + 要从应用的其他部分抽象线程管理，将应用的任务传递给 *executor*。
 
-### DeadLock
+### 死锁
 
-High level：
+<!-- damn style -->
 
+<!-- Below content I learn/copy from zhihu, not like this damn answer style
 死锁是指有两个或两个以上的线程在执行过程中去争夺同样一个共享资源造成的相互等待的一个现象。如果没有外部的干预，线程会一直阻塞，无法往下去执行，这样一直处于相互等待资源的线程，我们称为死锁线程。
 导致死锁的条件有4个，这4个条件同时满足就会产生死锁：
 
@@ -263,7 +370,15 @@ High level：
 + 破坏不可抢占条件：
   + 占用部分资源的线程在进一步申请其他资源的时候，如果申请不到，我们可以主动去释放它占有的资源
 + 破坏循环等待条件：
-  + 可以按序申请资源来预防，按序申请是指资源是有线性顺序的，申请的时候，可以先申请资源序号小的，然后再去申请资源序号大的，这样线性化之后，自然就不存在循环了
+  + 可以按序申请资源来预防，按序申请是指资源是有线性顺序的，申请的时候，可以先申请资源序号小的，然后再去申请资源序号大的，这样线性化之后，自然就不存在循环了 -->
+
+<!-- good style -->
+
+死锁是一种特定的程序状态，在实体之间，由于循环依赖导致彼此一直处于等待之中，没有任何个体可以继续前进。死锁不仅仅是在线程之间会发生，存在资源独占的进程之间同样也可能出现死锁。通常来说，我们大多聚焦在多线程场景中的死锁，指两个或多个线程之间，由于互相持有对方需要的锁，而永久处于阻塞的状态。
+
+![deadlock](/img/deadlock.webp)
+
+定位死锁最常见的方式就是利用 jstack 等工具获取线程栈，然后定位互相之间的依赖关系，进而找到死锁。如果是比较明显的死锁，往往 jstack 等就能直接定位，类似 jConsole 可以在图形界面进行有限的死锁检测。
 
 [threads]:https://docs.oracle.com/javase/specs/jvms/se6/html/Threads.doc.html#21294
 [synchronized]:https://docs.oracle.com/javase/specs/jvms/se6/html/Compiling.doc.html#6530
