@@ -378,7 +378,7 @@ private void set(ThreadLocal<?> key, Object value) {
 
 ![deadlock](/img/deadlock.webp)
 
-定位死锁最常见的方式就是利用 jstack 等工具获取线程栈，然后定位互相之间的依赖关系，进而找到死锁。如果是比较明显的死锁，往往 jstack 等就能直接定位，类似 jConsole 可以在图形界面进行有限的死锁检测。
+定位死锁最常见的方式就是利用 jstack 等工具获取线程栈，然后定位互相之间的依赖关系，进而找到死锁。如果是比较明显的死锁，往往 jstack 等就能直接定位，类似 JConsole 可以在图形界面进行有限的死锁检测。
 
 [threads]:https://docs.oracle.com/javase/specs/jvms/se6/html/Threads.doc.html#21294
 [synchronized]:https://docs.oracle.com/javase/specs/jvms/se6/html/Compiling.doc.html#6530
