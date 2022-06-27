@@ -5,7 +5,7 @@ description: "Intro to classes in java.util.concurrent package"
 tags: ["java", "juc"]
 categories: ["java"]
 author: "杨晓峰·geektime"
-draft: true
+draft: false
 ---
 
 juc 通常指 java.util.concurrent 并发包，这个包集中了 Java 并发的各种基础工具类，具体包括几个方面：
@@ -176,7 +176,7 @@ import java.util.concurrent.CyclicBarrier;
 public class CyclicBarrierSample {
     public static void main(String[] args) {
         CyclicBarrier barrier = new CyclicBarrier(5, new Runnable() {
-            // 屏障执行调用该 action
+            // 屏障触发时执行该 action
             @Override
             public void run() {
                 System.out.println("Action...Go again");
@@ -190,6 +190,8 @@ public class CyclicBarrierSample {
     }
 
     static class CyclicWorker implements Runnable {
+        // 编队总数
+        private static final int GROUP_COUNT = 2;
         private CyclicBarrier barrier;
         public CyclicWorker(CyclicBarrier barrier) {
             this.barrier = barrier;
@@ -198,7 +200,7 @@ public class CyclicBarrierSample {
         @Override
         public void run() {
             try {
-                for (int i = 0; i < 2; i++) {
+                for (int i = 0; i < GROUP_COUNT; i++) {
                     System.out.println("Executed!");
                     barrier.await();
                 }
@@ -211,3 +213,58 @@ public class CyclicBarrierSample {
     }
 }
 ```
+
+执行结果如下：
+
+``` console
+Executed!
+Executed!
+Executed!
+Executed!
+Executed!
+Action...Go again
+Executed!
+Executed!
+Executed!
+Executed!
+Executed!
+Action...Go again
+```
+
+因为 CyclicBarrier 会自动进行重置，所以这个逻辑可以自然支持更多人排队。
+
+### ConcurrentHashMap 和 ConcurrentSkipListMap
+
+并发包内提供了线程安全的 Map、List 和 Set, 结构如下：
+
+![coll](/img/concurrent-collect.webp)
+
+从命名上大概分为 Concurrent*、CopyOnWrite*、Blocking 等三类，同样是线程安全容器，可以简单认为：
+
++ Concurrent 类型没有类似 CopyOnWrite 之类容器相对较重的修改开销。
++ Concurrent 提供了较低的遍历一致性，即所谓的弱一致性，例如，当利用迭代器遍历时，如果容器发生修改，迭代器仍然可以继续进行遍历
++ 与弱一致性对应的，就是我们介绍过的同步容器常见的行为“fail-fast”，也就是检测到容器在遍历过程中发生了修改，则抛出“ConcurrentModificationException”，不再继续遍历。
++ 弱一致性的另一个体现是，size 等操作准确性是有限的，未必是 100% 准确的。
+
+如果我们侧重于 Map 放入或获取的速度，而不在乎顺序，大多数推荐使用 ConcurrentHashMap，反之则使用 ConcurrentSkipListMap；如果我们需要对大量数据进行频繁的修改 ConcurrentSkipListMap 也可能变现出优势。我们前面提到普通无顺序场景使用 HashMap，有顺序场景则可以选择 TreeMap。
+
+关于 CopyOnWrite 容器，其实 CopyOnWriteArraySet 是通过包装 CopyOnWriteArrayList 实现的，CopyOnWrite 的意思就是，当我们进行修改操作时，如 add、set、remove，都会拷贝原数组，修改后替换原来的数组，通过这种防御性的方式，实现另类的线程安全。我们可以看下 add 方法的实现：
+
+``` java
+public boolean add(E e) {
+    synchronized (lock){
+        Object[] elements = getArray();
+        int len = elements.length;
+        Object[] newElements = Arrays.copyOf(elements, len + 1);
+        newElements[len] = e;
+        setArray(newElements);
+        return true;
+    }
+}
+
+final void setArray(Object[] a) {
+    array = a;
+}
+```
+
+这种数据结构，比较适合读多写少的操作，不然修改的开销还是非常明显的。

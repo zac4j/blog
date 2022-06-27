@@ -1,11 +1,11 @@
 ---
 title: "Intro to ConcurrentHashMap"
 date: 2022-05-23T15:11:27+08:00
-description: "ConcurrentHashMap introduction"
+description: "Intro to ConcurrentHashMap"
 tags: ["hashmap", "concurrenthashmap", "map"]
 categories: ["data structure", "concurrent"]
 author: "杨晓峰·geektime"
-draft: true
+draft: false
 ---
 
 Java 提供了不同层面的线程安全支持。在传统集合框架内部，除了 Hashtable 等容器，还提供了同步包装器（Synchronized Wrapper），我们可以通过 Collections 工具类提供的包装方法来获取同步包装器，如 Collections.synchronizedMap，但是它们利用的都是粗粒度的同步方式，在高并发情况下，性能比较底下。

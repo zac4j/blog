@@ -5,7 +5,7 @@ description: "Java File Processing Performance"
 tags: ["java", "file", "stream"]
 categories: ["java"]
 author: "杨晓峰·geektime"
-draft: true
+draft: false
 ---
 
 我们先来比较 IO 和 NIO 两种写入文件的实现：
