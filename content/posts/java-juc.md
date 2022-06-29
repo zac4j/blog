@@ -3,12 +3,12 @@ title: "Intro to Java Juc"
 date: 2022-06-14T15:24:53+08:00
 description: "Intro to classes in java.util.concurrent package"
 tags: ["java", "juc"]
-categories: ["java"]
+categories: ["java", "concurrent"]
 author: "杨晓峰·geektime"
 draft: false
 ---
 
-juc 通常指 java.util.concurrent 并发包，这个包集中了 Java 并发的各种基础工具类，具体包括几个方面：
+Juc 通常指 java.util.concurrent 并发包，这个包集中了 Java 并发的各种基础工具类，具体包括几个方面：
 
 + 提供了比 synchronized 更高级的各种同步结构，包括 CountDownLatch、CyclicBarrier、Semaphore 等，可以实现更加丰富的多线程操作，比如利用 Semaphore 作为资源控制器，限制同时急性工作的线程数量。
 + 各种线程安全的容器，如 ConcurrentHashMap、有序的 ConcurrentSkipListMap，或者类似快照机制，实现线程安全的动态数组 CopyOnWriteArrayList 等。
@@ -94,6 +94,51 @@ Semaphore 的工作逻辑是，首先线程试图获取工作许可，得到许�
 + CountDownLatch 的基本操作组合是 countDown/await。调用 await 的线程阻塞等待 countDown 足够的次数，不管你是一个线程还是多个线程里 countDown，只要次数足够即可。**CountDownLatch 操作的重点是事件**。
 + CyclicBarrier 的基本操作组合，是 await，当所有的 parties 都调用了 await，才会继续进行任务，并自动进行重置。正常情况下，CyclicBarrier 的重置都是自动发生的，如果调用 reset 方法，但还有线程在等待，就会导致等待线程被打扰，抛出 BrokenBarrierException 异常。**CyclicBarrier 侧重点是线程**，而不是调用事件，它的典型应用场景是用来等待并发线程结束。
 
+#### CountDownLatch Handoff Implementation
+
+``` java
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class HandoffLatchSample {
+
+    private static ExecutorService executor = Executors.newFixedThreadPool(2);
+    private static AtomicInteger sharedState = new AtomicInteger();
+    private static CountDownLatch countDownLatch = new CountDownLatch(1);
+    
+    private static Runnable producer = () -> {
+        Integer producedElement = ThreadLocalRandom.current().nextInt();
+        System.out.println("Saving an element: " + producedElement + " to the exchange point");
+        sharedState.set(producedElement);
+        countDownLatch.countDown();
+    };
+
+    private static Runnable consumer = () -> {
+        try {
+            countDownLatch.await();
+            Integer consumedElement = sharedState.get();
+            System.out.println("consumed an element: " + consumedElement + " from the exchange point");
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    };
+
+    public static void main(String[] args) throws InterruptedException {
+        executor.execute(producer);
+        executor.execute(consumer);
+
+        executor.awaitTermination(500L, TimeUnit.MILLISECONDS);
+        executor.shutdown();
+    }
+}
+```
+
+#### Taxi Implementation
+
 继续机场排队等车的场景，假设有 10 个人排队，我们将其分成 5 人一组，通过 CountDownLatch 来协调批次，我们可以这样实现：
 
 ``` java
@@ -153,7 +198,7 @@ class SecondBatchWorker implements Runnable {
 
 CountDownLatch 的调度方式相对简单，后一批次的线程进行 await，等待前一批 countDown 足够多次。这个例子也从侧面体现了它的局限性，虽然它也能支持10个人排队的情况，但是因为不能重用，如果要支持更多人排队，那么就不能依赖一个 CountDownLatch 进行了。其运行结果如下：
 
-``` console
+``` log
 First batch executed!
 First batch executed!
 First batch executed!
@@ -167,7 +212,7 @@ Second batch executed!
 Second batch executed!
 ```
 
-如果用 CyclicBarrier 来实现：
+如果用 **CyclicBarrier** 来实现：
 
 ``` java
 import java.util.concurrent.BrokenBarrierException;
@@ -216,7 +261,7 @@ public class CyclicBarrierSample {
 
 执行结果如下：
 
-``` console
+``` log
 Executed!
 Executed!
 Executed!
@@ -267,4 +312,4 @@ final void setArray(Object[] a) {
 }
 ```
 
-这种数据结构，比较适合读多写少的操作，不然修改的开销还是非常明显的。
+这种数据结构，比较适合**读多写少**的操作，毕竟修改的开销还是非常明显的。

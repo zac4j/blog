@@ -3,7 +3,7 @@ title: "Java Blocking Queue"
 date: 2022-06-19T20:38:57+08:00
 tags: ["java", "blocking", "queue"]
 description: "Intro to Java Blocking Queue"
-categories: ["java"]
+categories: ["java", "concurrent"]
 author: "杨晓峰·geektime"
 draft: false
 ---
@@ -28,7 +28,7 @@ Deque 侧重点是支持**队列头尾**都进行插入和删除，所以提供�
 + 尾部插入时需要的 addLast(e)、offerLast(e).
 + 尾部删除所需要的 removeLast()、pollLast().
 
-juc 包中绝大部分 Queue 都实现了 BlockingQueue 接口。在常规队列操作基础上，Blocking 意味着其提供了特定的等待性操作，获取时（take）等待元素进队，或者插入时（put）等待队列出现空位。
+JUC 包中绝大部分 Queue 都实现了 BlockingQueue 接口。在常规队列操作基础上，Blocking 意味着其提供了特定的等待性操作，获取时（take）等待元素进队，或者插入时（put）等待队列出现空位。
 
 ``` java
 /**
@@ -113,8 +113,6 @@ public E take() throws InterruptedException {
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-import com.oracle.jrockit.jfr.Producer;
-
 public class ConsumerProducer {
     private static final String EXIT = "Good bye!";
     public static void main(String[] args) {
@@ -188,3 +186,54 @@ public class ConsumerProducer {
 + ArrayBlockingQueue 实现比较简单，性能更好预测，属于表现稳定的结构。
 + 如果我们需要实现两个线程之间接力性（handoff）的场景，除了 CountDownLatch，SynchronousQueue 也是完美符合这种场景的，而且线程间协调和数据传输统一起来，代码更加规范。
 + 很多时候 SynchronousQueue 的性能表现，往往大大超过其他实现，尤其是在队列元素较小的场景。
+
+#### Synchronous Handoffs Implementation
+
+``` java
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+
+public class HandoffSample {
+
+    private static ExecutorService executor = Executors.newFixedThreadPool(2);
+    private static SynchronousQueue<Integer> queue = new SynchronousQueue<>();
+
+    private static Runnable producer = () -> {
+        Integer producedElement = ThreadLocalRandom.current().nextInt();
+        try {
+            System.out.println("Saving an element: "+ producedElement +" to the exchange point");
+            queue.put(producedElement);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    };
+
+    private static Runnable consumer = () -> {
+        try {
+            Integer consumedElement = queue.take();
+            System.out.println("Consumed an element: "+ consumedElement +" from the exchange point");
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    };
+
+    public static void main(String[] args) throws InterruptedException {
+        executor.execute(producer);
+        executor.execute(consumer);
+
+        executor.awaitTermination(500L, TimeUnit.MILLISECONDS);
+        executor.shutdown();
+        assert(queue.size() == 0);
+    }
+}
+```
+
+打印出的 log:
+
+``` log
+Saving an element: 466241464 to the exchange point
+Consumed an element: 466241464 from the exchange point
+```

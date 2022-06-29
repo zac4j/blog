@@ -23,7 +23,7 @@ draft: true
 线程安全需要保证几个基本特性：
 
 + **原子性**：简单说就是相关操作不会中途被其他线程干扰，一般通过同步机制实现
-+ **可见性**：是一个现场修改了某个共享变量，其状态能够立即被其他线程知晓，通常被解释为将线程本地状态反映到主内存上，volatile 就是负责保证可见性的。
++ **可见性**：是一个线程修改了某个共享变量，其状态能够立即被其他线程知晓，通常被解释为将线程本地状态反映到主内存上，volatile 就是负责保证可见性的。
 + **有序性**：是保证线程内串行语义，避免指令重排等。
 
 我们先看一段会有线程安全问题的例子：
@@ -118,7 +118,7 @@ ReentrantLock 相比 synchronized 可以进行精细的同步操作，如：
 + 可以响应中断请求等
 + ...
 
-juc 包中还有**条件变量**（java.util.concurrent.Condition），如果说 ReentrantLock 是 synchronized 的替代选择，Condition 则是将 wait、notify、notifyAll 等操作转化为相应的对象，将复杂而晦涩的同步操作转变为直观可控的对象行为。
+Juc 包中还有**条件变量**（java.util.concurrent.Condition），如果说 ReentrantLock 是 synchronized 的替代选择，Condition 则是将 wait、notify、notifyAll 等操作转化为相应的对象，将复杂而晦涩的同步操作转变为直观可控的对象行为。
 
 我们可以通过 ArrayBlockingQueue 源码直观看到 ReentrantLock 和 Condition 的使用。
 

@@ -52,3 +52,4 @@ theme = "ananke"
 
 [deploy]:https://segmentfault.com/a/1190000012975914
 [cross-ref]:https://gohugo.io/content-management/cross-references/
+[about]:https://digitaldrummerj.me/hugo-add-additional-pages/

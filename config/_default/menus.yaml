@@ -9,5 +9,5 @@ main:
     url: /categories/
     weight: 3
   - name: About
-    url: '#about'
+    url: '/about/'
     weight: 4
