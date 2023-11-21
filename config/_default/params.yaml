@@ -1,6 +1,6 @@
 mainSections:
   - posts
-description: Welcome to Zac's blog.
+description: An Android SWE's Blog
 
 repoEditURL:
 
@@ -21,12 +21,12 @@ publisherLogo:
 #  handler: highlightjs
 
 #  highlightjs:
-    # highlight.js doesn't bundle every language. So please specify additional languages you want here.
-    # See https://github.com/highlightjs/cdn-release/tree/master/build/languages for available languages.
+# highlight.js doesn't bundle every language. So please specify additional languages you want here.
+# See https://github.com/highlightjs/cdn-release/tree/master/build/languages for available languages.
 #    languages:
 #      - java
 #      - kotlin
-    # See https://github.com/highlightjs/cdn-release/tree/master/build/styles for available styles.
+# See https://github.com/highlightjs/cdn-release/tree/master/build/styles for available styles.
 #    style: solarized-light
 
 math:
@@ -74,6 +74,6 @@ diagram:
   #   # You can list the key and value you want as below.
   #   # Because Hugo's config params are case-insensitive, you need to add `-` or `_` before the uppercase letters.
   #   # For example, `diagramPadding` should be written as `diagram-Padding` or other acceptable formats.
-  #   theme: 
+  #   theme:
   #   flowchart:
   #     diagram-padding:
